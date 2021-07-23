@@ -9,11 +9,11 @@ class KeyPrinter(DecafListener):
         print("Hello: %s" % ctx.ID())
 
 def main(argv):
-    #input_stream = FileStream(argv[1])
-    lexer = DecafLexer(StdinStream())
+    input_stream = FileStream(argv[1])
+    lexer = DecafLexer(input_stream)
     stream = CommonTokenStream(lexer)
     parser = DecafParser(stream)
-    tree = parser.startRule()    
+    tree = parser.program()  
 
     printer = KeyPrinter()
     walker = ParseTreeWalker()
