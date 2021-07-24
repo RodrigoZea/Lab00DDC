@@ -24,7 +24,7 @@ varDeclaration
     ;
 structDeclaration:'struct' ID '{' (varDeclaration)* '}';
 varType : 'int' | 'char' | 'boolean' | 'struct' ID | structDeclaration | 'void' ;
-methodDeclaration: methodType ID '(' (parameter)* ')' block;
+methodDeclaration: methodType ID '(' (parameter (',' parameter)*)* ')' block;
 methodType: 'int'| 'char'| 'boolean' | 'void';
 parameter
     : parameterType ID
