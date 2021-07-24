@@ -39,6 +39,7 @@ T__37=38
 ID=39
 NUM=40
 CHAR=41
+WS=42
 'class'=1
 'Program'=2
 '{'=3

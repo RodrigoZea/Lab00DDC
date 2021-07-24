@@ -9,6 +9,7 @@ fragment DIGIT: '0'..'9';
 ID: LETTER (LETTER|DIGIT)*;
 NUM: DIGIT(DIGIT)*;
 CHAR: '\'' ( ~['\r\n\\] | '\\' ['\\] ) '\'';
+WS : [ \t\r\n\f]+  ->channel(HIDDEN);
 
 // Reglas PARSER
 program:'class' 'Program' '{' (declaration)* '}';

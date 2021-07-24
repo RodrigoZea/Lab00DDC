@@ -8,8 +8,8 @@ fragment DIGIT: '0'..'9';
 // Las otras reglas de lexer de Decaf 
 ID: LETTER (LETTER|DIGIT)*;
 NUM: DIGIT(DIGIT)*;
-//CHAR: '\'' ( ~['\r\n\\] | '\\' ['\\] ) '\'';
-CHAR                   :	'\''  LETTER  '\'' 			;
+CHAR: '\'' ( ~['\r\n\\] | '\\' ['\\] ) '\'';
+WS : [ \t\r\n\f]+  ->channel(HIDDEN);
 
 // Reglas PARSER
 program:'class' 'Program' '{' (declaration)* '}';
@@ -62,7 +62,6 @@ rel_op : '<' | '>' | '<=' | '>=' ;
 eq_op : '==' | '!=' ;
 cond_op : '&&' | '||' ;
 literal : int_literal | char_literal | bool_literal ;
-int_literal: NUM ;
-//char_literal : '\'' CHAR '\'' ;
-char_literal: CHAR;
+int_literal : NUM ;
+char_literal : '\'' CHAR '\'' ;
 bool_literal : 'true' | 'false' ;
