@@ -23,14 +23,30 @@ varDeclaration
     | varType ID '[' NUM ']' ';' 
     ;
 structDeclaration:'struct' ID '{' (varDeclaration)* '}';
-varType : 'int' | 'char' | 'boolean' | 'struct' ID | structDeclaration | 'void' ;
+varType 
+    : 'int' 
+    | 'char' 
+    | 'boolean' 
+    | 'struct' ID 
+    | structDeclaration 
+    | 'void' 
+    ;
 methodDeclaration: methodType ID '(' (parameter (',' parameter)*)* ')' block;
-methodType: 'int'| 'char'| 'boolean' | 'void';
+methodType
+    : 'int'
+    | 'char'
+    | 'boolean' 
+    | 'void'
+    ;
 parameter
     : parameterType ID
     | parameterType ID '[' ']' 
     ;
-parameterType: 'int' | 'char' | 'boolean';
+parameterType
+    : 'int' 
+    | 'char' 
+    | 'boolean'
+    ;
 block: '{' (varDeclaration)* (statement)* '}';
 statement
     : 'if' '(' expression ')' block ( 'else' block )?
