@@ -1,4 +1,4 @@
-# Generated from .\Decaf.g4 by ANTLR 4.9.2
+# Generated from Decaf.g4 by ANTLR 4.9.2
 from antlr4 import *
 if __name__ is not None and "." in __name__:
     from .DecafParser import DecafParser
@@ -170,24 +170,6 @@ class DecafListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by DecafParser#op.
-    def enterOp(self, ctx:DecafParser.OpContext):
-        pass
-
-    # Exit a parse tree produced by DecafParser#op.
-    def exitOp(self, ctx:DecafParser.OpContext):
-        pass
-
-
-    # Enter a parse tree produced by DecafParser#arith_op.
-    def enterArith_op(self, ctx:DecafParser.Arith_opContext):
-        pass
-
-    # Exit a parse tree produced by DecafParser#arith_op.
-    def exitArith_op(self, ctx:DecafParser.Arith_opContext):
-        pass
-
-
     # Enter a parse tree produced by DecafParser#rel_op.
     def enterRel_op(self, ctx:DecafParser.Rel_opContext):
         pass
@@ -206,12 +188,48 @@ class DecafListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by DecafParser#cond_op.
-    def enterCond_op(self, ctx:DecafParser.Cond_opContext):
+    # Enter a parse tree produced by DecafParser#arith_op_fifth.
+    def enterArith_op_fifth(self, ctx:DecafParser.Arith_op_fifthContext):
         pass
 
-    # Exit a parse tree produced by DecafParser#cond_op.
-    def exitCond_op(self, ctx:DecafParser.Cond_opContext):
+    # Exit a parse tree produced by DecafParser#arith_op_fifth.
+    def exitArith_op_fifth(self, ctx:DecafParser.Arith_op_fifthContext):
+        pass
+
+
+    # Enter a parse tree produced by DecafParser#arith_op_fourth.
+    def enterArith_op_fourth(self, ctx:DecafParser.Arith_op_fourthContext):
+        pass
+
+    # Exit a parse tree produced by DecafParser#arith_op_fourth.
+    def exitArith_op_fourth(self, ctx:DecafParser.Arith_op_fourthContext):
+        pass
+
+
+    # Enter a parse tree produced by DecafParser#arith_op_third.
+    def enterArith_op_third(self, ctx:DecafParser.Arith_op_thirdContext):
+        pass
+
+    # Exit a parse tree produced by DecafParser#arith_op_third.
+    def exitArith_op_third(self, ctx:DecafParser.Arith_op_thirdContext):
+        pass
+
+
+    # Enter a parse tree produced by DecafParser#arith_op_second.
+    def enterArith_op_second(self, ctx:DecafParser.Arith_op_secondContext):
+        pass
+
+    # Exit a parse tree produced by DecafParser#arith_op_second.
+    def exitArith_op_second(self, ctx:DecafParser.Arith_op_secondContext):
+        pass
+
+
+    # Enter a parse tree produced by DecafParser#arith_op_first.
+    def enterArith_op_first(self, ctx:DecafParser.Arith_op_firstContext):
+        pass
+
+    # Exit a parse tree produced by DecafParser#arith_op_first.
+    def exitArith_op_first(self, ctx:DecafParser.Arith_op_firstContext):
         pass
 
 

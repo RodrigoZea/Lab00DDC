@@ -1,0 +1,36 @@
+class Program
+{
+struct A
+{
+	int a;
+};
+
+struct B
+{
+	int b;
+	struct A c;
+};
+
+
+int factorial(int n)
+{
+	if (n==0)
+	{
+		return 1;
+	}
+	else
+	{
+		return n*factorial(n-1);
+	}
+
+}
+
+void main(void)
+{
+	struct B y;
+	y.b = 5;
+	y.c.a = factorial(y.b);
+}
+
+
+}
