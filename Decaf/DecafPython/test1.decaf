@@ -1,5 +1,0 @@
-class Program {
-    void main(){
-        return 33 + 55 ;
-    }
-}
