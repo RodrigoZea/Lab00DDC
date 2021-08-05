@@ -17,7 +17,7 @@ struct A z;
 
 void main(void)
 {
-	struct B y[5];
+	struct B y[0];
 	int i;
 	int j;
 	int k;	
