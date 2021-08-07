@@ -10,11 +10,12 @@ from DecafListener import DecafListener
 from DecafErrors import *
 
 class SymbolTableItem():
-    def __init__(self, id, varType, scope):
-        self.id = id
+    def __init__(self, varId, varType, scope):
+        self.varId = varId
         self.varType = varType
         self.size = 0
         self.scope = scope
+        self.varContext = ""
 
 class MethodSymbolTableItem():
     def __init__(self, methodId, methodType, startLine, endLine):
@@ -22,6 +23,10 @@ class MethodSymbolTableItem():
         self.methodType = methodType
         self.startLine = startLine
         self.endLine = endLine
+
+# Maybe a class to check struct?
+
+#---------------------------------------------------------------------------------------------------
 
 class DecafPrinter(DecafListener):
     def __init__(self) -> None:
@@ -46,15 +51,42 @@ class DecafPrinter(DecafListener):
                 if (int(value) <= 0):
                     raise ArraySizeError
                 else:
+                    varType = ctx.getChild(0).getText()
+                    varId = ctx.getChild(1).getText()
+                    # Add to symbol table
+                    newVarStEntry = SymbolTableItem(
+                                        varType,
+                                        varId,
+                                        self.currentScope
+                                    )
+
+                    self.addToSymbolTable(item=newVarStEntry)
+
                     return super().enterVarDeclaration(ctx)
         except ArraySizeError:
             print("ArraySizeError at line %d: Array size must be bigger than 0" % ctx.start.line)
 
     def enterMethodDeclaration(self, ctx: DecafParser.MethodDeclarationContext):
         methodType = ctx.getChild(0).getText()
+        methodName = ctx.getChild(1).getText()
 
         if (methodType == 'void'):
             self.currentMethodVoid = True
+
+        # Switch scope to method
+        self.enterScope(methodName)
+
+        # Add to method symbol table
+        newMethodStEntry = MethodSymbolTableItem(
+                            methodName,
+                            methodType,
+                            ctx.start.line,
+                            ctx.stop.line
+                        )
+
+        self.addToMethodSymbolTable(item=newMethodStEntry)
+
+        # Add params to symbol table
 
         return super().enterMethodDeclaration(ctx)
 
@@ -67,18 +99,11 @@ class DecafPrinter(DecafListener):
             # 0: Return
             # 1: Value
             # 2: ;
-            hasReturnStatement = False
+            #hasReturnStatement = False
             statementChldn = ctx.getChildren()
 
-            for c in statementChldn:
-                if self.currentMethodVoid:
-                    print(c.getText())
-
             if ctx.getChild(0).getText() != "return":
-                hasReturnStatement = False
                 raise ReturnMissing
-            else:
-                hasReturnStatement = True
 
             if self.currentMethodVoid:
                 if ctx.getChild(0).getText() != '':
@@ -101,11 +126,43 @@ class DecafPrinter(DecafListener):
     def enterScope(self, scope):
         self.currentScope = scope
 
-    def lookupSymbolTable(self):
-        print("LookupSymbolTable")
+    def addToSymbolTable(self, item: SymbolTableItem):
+        try:
+            if self.symbolTableVar.count == 0:
+                self.symbolTableVar.append(item)
+            else:
+                exists = False
+                for i in self.symbolTableVar:
+                    if (item.varId == i.varId and item.scope == i.scope):
+                        exists = True
 
-    def lookupMethodSymbolTable(self):
-        print("LookupMethodSymbolTable")
+                if not exists:
+                    self.symbolTableVar.append(item)
+                else:
+                    raise ExistingItem
+                    
+        except ExistingItem:
+            print("Symbol %s is already declared in the same context.", item.varId)
+
+    def addToMethodSymbolTable(self, item: MethodSymbolTableItem):
+        try:
+            if self.symbolTableMethod.count == 0:
+                self.symbolTableMethod.append(item)
+            else:
+                exists = False
+                for i in self.symbolTableMethod:
+                    if item.methodId == i.methodId:
+                        exists = True
+
+                if not exists:
+                    self.symbolTableMethod.append(item)
+                else:
+                    raise ExistingItem
+                    
+        except ExistingItem:
+            print("Method %s is already declared.", item.methodId)
+
+#---------------------------------------------------------------------------------------------------
 
 def main(argv):
     input_stream = FileStream(argv[1])
