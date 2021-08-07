@@ -9,9 +9,31 @@ from DecafParser import DecafParser
 from DecafListener import DecafListener
 from DecafErrors import *
 
+class SymbolTableItem():
+    def __init__(self, id, varType, scope):
+        self.id = id
+        self.varType = varType
+        self.size = 0
+        self.scope = scope
+
+class MethodSymbolTableItem():
+    def __init__(self, methodId, methodType, startLine, endLine):
+        self.methodId = methodId
+        self.methodType = methodType
+        self.startLine = startLine
+        self.endLine = endLine
+
 class DecafPrinter(DecafListener):
     def __init__(self) -> None:
+        # Flags or misc
         self.errorList = []
+        self.mainFound = False
+        self.currentMethodVoid = False
+        self.currentScope = "global"
+
+        # Symbol table related
+        self.symbolTableVar = []
+        self.symbolTableMethod = []
         super().__init__()
 
     def returnErrorList(self):
@@ -32,8 +54,7 @@ class DecafPrinter(DecafListener):
         methodType = ctx.getChild(0).getText()
 
         if (methodType == 'void'):
-            print("Method is void")
-            
+            self.currentMethodVoid = True
 
         return super().enterMethodDeclaration(ctx)
 
@@ -41,7 +62,50 @@ class DecafPrinter(DecafListener):
         return super().enterBlock(ctx)
 
     def enterStatement(self, ctx: DecafParser.StatementContext):
-        return super().enterStatement(ctx)
+        try:
+            # Children structure
+            # 0: Return
+            # 1: Value
+            # 2: ;
+            hasReturnStatement = False
+            statementChldn = ctx.getChildren()
+
+            for c in statementChldn:
+                if self.currentMethodVoid:
+                    print(c.getText())
+
+            if ctx.getChild(0).getText() != "return":
+                hasReturnStatement = False
+                raise ReturnMissing
+            else:
+                hasReturnStatement = True
+
+            if self.currentMethodVoid:
+                if ctx.getChild(0).getText() != '':
+                    raise ReturnNotEmpty
+            else:
+                if ctx.getChild(0).getText() == '':
+                    raise ReturnEmpty
+
+            self.currentMethodVoid = False
+
+            return super().enterStatement(ctx)
+
+        except ReturnMissing:
+            print("Expected return statement on method")
+        except ReturnEmpty:
+            print("Missing return value on non-void method")
+        except ReturnNotEmpty:
+            print("Void type method should have an empty return")
+
+    def enterScope(self, scope):
+        self.currentScope = scope
+
+    def lookupSymbolTable(self):
+        print("LookupSymbolTable")
+
+    def lookupMethodSymbolTable(self):
+        print("LookupMethodSymbolTable")
 
 def main(argv):
     input_stream = FileStream(argv[1])

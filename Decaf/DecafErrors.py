@@ -3,7 +3,13 @@ class Error(Exception):
     pass
 
 class ArraySizeError(Error):
-    print("Error")
+    pass
 
 class VoidReturnError(Error):
-    print("asdf")
+    pass
+
+class ReturnEmpty(Error):
+    pass
+
+class ReturnNotEmpty(Error):
+    pass
