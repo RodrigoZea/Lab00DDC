@@ -13,3 +13,6 @@ class ReturnEmpty(Error):
 
 class ReturnNotEmpty(Error):
     pass
+
+class ReturnMissing(Error):
+    pass
