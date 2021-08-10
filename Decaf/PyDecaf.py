@@ -10,21 +10,25 @@ from DecafListener import DecafListener
 from DecafErrors import *
 
 class SymbolTableItem():
-    def __init__(self, varId, varType, scope):
-        self.varId = varId
+    def __init__(self, varId, varType):
+        self.varId = varId 
         self.varType = varType
-        self.size = 0
-        self.scope = scope
-        self.varContext = ""
 
 class MethodSymbolTableItem():
-    def __init__(self, methodId, methodType, startLine, endLine):
+    def __init__(self, methodId, methodType):
         self.methodId = methodId
         self.methodType = methodType
-        self.startLine = startLine
-        self.endLine = endLine
 
 # Maybe a class to check struct?
+"""
+class StructSymbolTableItem():
+    def __init__(self):
+        self.structId = structId
+        self.size = 0
+
+When adding to symbol table check if type is different from primitives, if it is, check on StructSymbolTable to see if its a valid name.
+
+"""
 
 #---------------------------------------------------------------------------------------------------
 
@@ -34,11 +38,15 @@ class DecafPrinter(DecafListener):
         self.errorList = []
         self.mainFound = False
         self.currentMethodVoid = False
-        self.currentScope = "global"
+        self.parentScope = None
+        self.primitives = ('int', 'char', 'boolean', 'struct', 'void')
 
         # Symbol table related
-        self.symbolTableVar = []
-        self.symbolTableMethod = []
+        self.currentMethodName = ""
+        self.currentScope = "global"
+        self.nestedCounter = 1
+        self.scopeDictionary = {}
+
         super().__init__()
 
     def returnErrorList(self):
@@ -50,21 +58,16 @@ class DecafPrinter(DecafListener):
                 value = ctx.getChild(3).getText()
                 if (int(value) <= 0):
                     raise ArraySizeError
-                else:
-                    varType = ctx.getChild(0).getText()
-                    varId = ctx.getChild(1).getText()
-                    # Add to symbol table
-                    newVarStEntry = SymbolTableItem(
-                                        varType,
-                                        varId,
-                                        self.currentScope
-                                    )
+            else:
+                varType = ctx.getChild(0).getText()
+                varId = ctx.getChild(1).getText()
 
-                    self.addToSymbolTable(item=newVarStEntry)
+                self.addToSymbolTable(varType, varId)
 
-                    return super().enterVarDeclaration(ctx)
+                return super().enterVarDeclaration(ctx)
         except ArraySizeError:
-            print("ArraySizeError at line %d: Array size must be bigger than 0" % ctx.start.line)
+            #print("ArraySizeError at line %d: Array size must be bigger than 0" % ctx.start.line)
+            a = 0
 
     def enterMethodDeclaration(self, ctx: DecafParser.MethodDeclarationContext):
         methodType = ctx.getChild(0).getText()
@@ -73,25 +76,60 @@ class DecafPrinter(DecafListener):
         if (methodType == 'void'):
             self.currentMethodVoid = True
 
-        # Switch scope to method
+        self.currentMethodName = methodName
         self.enterScope(methodName)
-
-        # Add to method symbol table
-        newMethodStEntry = MethodSymbolTableItem(
-                            methodName,
-                            methodType,
-                            ctx.start.line,
-                            ctx.stop.line
-                        )
-
-        self.addToMethodSymbolTable(item=newMethodStEntry)
-
-        # Add params to symbol table
 
         return super().enterMethodDeclaration(ctx)
 
+
+    def exitMethodDeclaration(self, ctx: DecafParser.MethodDeclarationContext):
+        self.currentScope = "global"
+        self.nestedCounter = 1
+        return super().exitMethodDeclaration(ctx)
+
     def enterBlock(self, ctx: DecafParser.BlockContext):
+        parentCtx = ctx.parentCtx
+        firstChild = parentCtx.getChild(0).getText()
+        
+        # Normal block
+        if firstChild not in self.primitives:
+            nestedBlockName = self.currentMethodName + str(self.nestedCounter)
+            self.nestedCounter += 1
+            self.enterScope(nestedBlockName)
+        
         return super().enterBlock(ctx)
+    
+    def exitMethodDeclaration(self, ctx: DecafParser.MethodDeclarationContext):
+        self.nestedCounter = 1
+
+        return super().exitMethodDeclaration(ctx)
+
+    def enterParameter(self, ctx: DecafParser.ParameterContext):
+        paramType = ctx.getChild(0).getText()
+
+        if paramType != 'void':
+            paramId = ctx.getChild(1).getText()
+            self.addToSymbolTable(paramType, paramId)
+
+        return super().enterParameter(ctx)
+
+    def enterScope(self, scope):
+        self.currentScope = scope
+
+    def addToSymbolTable(self, varType, varId):
+        # Scope doesnt exist in dictionary
+        if self.currentScope not in self.scopeDictionary:
+            self.scopeDictionary[self.currentScope] = [SymbolTableItem(varId, varType)]
+        # Scope already exists
+        else:
+            # Check if variable has already been declared in current scope
+            exists = False
+            for item in self.scopeDictionary[self.currentScope]:
+                if item.varId == varId:
+                    exists = True 
+
+            if not exists:
+                self.scopeDictionary[self.currentScope].append(SymbolTableItem(varId, varType))
 
     def enterStatement(self, ctx: DecafParser.StatementContext):
         try:
@@ -106,10 +144,10 @@ class DecafPrinter(DecafListener):
                 raise ReturnMissing
 
             if self.currentMethodVoid:
-                if ctx.getChild(0).getText() != '':
+                if ctx.getChild(0).getText() == "return" and ctx.getChild(1).getText() != '':
                     raise ReturnNotEmpty
             else:
-                if ctx.getChild(0).getText() == '':
+                if ctx.getChild(1).getText() == '':
                     raise ReturnEmpty
 
             self.currentMethodVoid = False
@@ -117,50 +155,17 @@ class DecafPrinter(DecafListener):
             return super().enterStatement(ctx)
 
         except ReturnMissing:
-            print("Expected return statement on method")
+            #print("Expected return statement on method")
+            a = 0
         except ReturnEmpty:
-            print("Missing return value on non-void method")
+            #print("Missing return value on non-void method")
+            a = 0
         except ReturnNotEmpty:
-            print("Void type method should have an empty return")
+           # print("Void type method should have an empty return")
+            a = 0
 
-    def enterScope(self, scope):
-        self.currentScope = scope
+    # -----------------------------------------------------------------------
 
-    def addToSymbolTable(self, item: SymbolTableItem):
-        try:
-            if self.symbolTableVar.count == 0:
-                self.symbolTableVar.append(item)
-            else:
-                exists = False
-                for i in self.symbolTableVar:
-                    if (item.varId == i.varId and item.scope == i.scope):
-                        exists = True
-
-                if not exists:
-                    self.symbolTableVar.append(item)
-                else:
-                    raise ExistingItem
-                    
-        except ExistingItem:
-            print("Symbol %s is already declared in the same context.", item.varId)
-
-    def addToMethodSymbolTable(self, item: MethodSymbolTableItem):
-        try:
-            if self.symbolTableMethod.count == 0:
-                self.symbolTableMethod.append(item)
-            else:
-                exists = False
-                for i in self.symbolTableMethod:
-                    if item.methodId == i.methodId:
-                        exists = True
-
-                if not exists:
-                    self.symbolTableMethod.append(item)
-                else:
-                    raise ExistingItem
-                    
-        except ExistingItem:
-            print("Method %s is already declared.", item.methodId)
 
 #---------------------------------------------------------------------------------------------------
 
@@ -173,6 +178,13 @@ def main(argv):
     printer = DecafPrinter()
     walker = ParseTreeWalker()
     walker.walk(printer, tree)
+
+    for c, v in printer.scopeDictionary.items():
+        print("KEY: ", c)
+
+        #print("VALUE: ", v)
+        for a in v:
+            print("     VALUE:", a.varType, a.varId)
 
     #traverse(tree, parser.ruleNames)
 

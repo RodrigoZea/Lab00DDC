@@ -29,6 +29,7 @@ void main(void)
 
 	while(i<=10)
 	{
+		int aaaa;
 		y[j].b[0]=InputInt();
 		
 		if(y[j].b[0]==5)
@@ -42,6 +43,7 @@ void main(void)
 		OutputInt(y[j].c.a);
 		i = i + 1;
 	}
+	return;
 }
 
 
@@ -56,7 +58,12 @@ int factorial(int n)
 
 void OutputInt(int n)
 {
-	return 1;
+	return;
+}
+
+void test(int a, int b, int c)
+{
+	return;
 }
 
 int InputInt(void)
