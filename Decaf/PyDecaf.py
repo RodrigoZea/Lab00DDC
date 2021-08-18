@@ -12,11 +12,12 @@ from DecafErrors import *
 
 # Stack
 class VarSymbolTableItem():
-    def __init__(self, varId, varType, scope):
+    def __init__(self, varId, varType, scope, varContext):
         self.varId = varId 
         self.varType = varType
         self.scope = scope
         self.offset = 0
+        self.varContext = varContext
 
 class MethodSymbolTableItem():
     def __init__(self, methodId, methodType):
@@ -36,9 +37,9 @@ class StructSymbolTableItem():
 
 class SymbolTableItem():
     def __init__(self, parentKey, symbolTable, returnType):
-        self.parentKey = parentKey,
-        self.symbolTable = symbolTable,
+        self.parentKey = parentKey
         self.returnType = returnType
+        self.symbolTable = symbolTable
 
 """
 {
@@ -76,11 +77,15 @@ class DecafPrinter(DecafListener):
         self.scopeDictionary = {}
         self.structDictionary = {}
 
+        self.addScopeToSymbolTable(None)
+
         super().__init__()
 
     def returnErrorList(self):
         return self.errorList
 
+    # -----------------------------------------------------------------------
+    # Listener override methods
     def enterVarDeclaration(self, ctx: DecafParser.VarDeclarationContext):
         try:
             if (ctx.NUM() != None):
@@ -88,11 +93,21 @@ class DecafPrinter(DecafListener):
                 if (int(value) <= 0):
                     raise ArraySizeError
             else:
-                # TODO: Add to symbol table!
+                # TODO: - Add to symbol table!
+                #       - Check if its inside a struct or a normal block
+
+                parentCtx = ctx.parentCtx
+                firstChild = parentCtx.getChild(0).getText()
+
                 varType = ctx.getChild(0).getText()
                 varId = ctx.getChild(1).getText()
 
-                self.addToSymbolTable(varType, varId)
+                print("CURRENT VAR: ", varId)
+
+                if firstChild == "struct":
+                    self.addStructToSymbolTable()
+                else:
+                    self.addVarToSymbolTable(varType, varId, "blockVar")
 
                 return super().enterVarDeclaration(ctx)
         except ArraySizeError:
@@ -112,12 +127,6 @@ class DecafPrinter(DecafListener):
         self.addScopeToSymbolTable(self.pastScope, methodType)
 
         return super().enterMethodDeclaration(ctx)
-
-
-    def exitMethodDeclaration(self, ctx: DecafParser.MethodDeclarationContext):
-        self.currentScope = "global"
-        self.nestedCounter = 1
-        return super().exitMethodDeclaration(ctx)
 
     def enterBlock(self, ctx: DecafParser.BlockContext):
         parentCtx = ctx.parentCtx
@@ -139,6 +148,8 @@ class DecafPrinter(DecafListener):
         self.currentMethodType = None
         self.currentMethodName = "global"
 
+        self.enterScope("global")
+
         return super().exitMethodDeclaration(ctx)
 
     def enterParameter(self, ctx: DecafParser.ParameterContext):
@@ -146,13 +157,12 @@ class DecafPrinter(DecafListener):
 
         if paramType != 'void':
             paramId = ctx.getChild(1).getText()
-            self.addToSymbolTable(paramType, paramId)
+            self.addVarToSymbolTable(paramType, paramId, "param")
 
         return super().enterParameter(ctx)
 
-    def enterScope(self, scope):
-        self.pastScope = self.currentScope
-        self.currentScope = scope
+    def enterStructDeclaration(self, ctx: DecafParser.StructDeclarationContext):
+        return super().enterStructDeclaration(ctx)
 
     def enterStatement(self, ctx: DecafParser.StatementContext):
         try:
@@ -173,7 +183,7 @@ class DecafPrinter(DecafListener):
                 if ctx.getChild(1).getText() == '':
                     raise ReturnEmpty
 
-            self.lookupSymbolTableVar()
+            #self.lookupSymbolTableVar()
 
             return super().enterStatement(ctx)
 
@@ -188,49 +198,27 @@ class DecafPrinter(DecafListener):
             a = 0
 
     # -----------------------------------------------------------------------
-    """
-    TODO: Rework symboltables to lists
-    """
+    # Non override methods
+    def enterScope(self, scope):
+        self.pastScope = self.currentScope
+        self.currentScope = scope
 
-    def addToSymbolTable(self, varType, varId):
-        # TODO: Change table from list to another dictionary to speedup computation time.
-        # -------------------------------------------------------------------------------
-        # Scope doesnt exist in dictionary
-        if self.currentScope not in self.scopeDictionary:
-            self.scopeDictionary[self.currentScope] = [VarSymbolTableItem(varId, varType)]
-        # Scope already exists
-        else:
-            # Check if variable has already been declared in current scope
-            exists = False
-            for item in self.scopeDictionary[self.currentScope]:
-                if item.varId == varId:
-                    exists = True 
-
-            if not exists:
-                self.scopeDictionary[self.currentScope].append(VarSymbolTableItem(varId, varType))
-
+    # -----------------------------------------------------------------------
+    # Symbol Table related methods
     def addScopeToSymbolTable(self, pastScope, methodType=None):
         if self.currentScope not in self.scopeDictionary:
-            self.scopeDictionary[self.currentScope] = SymbolTableItem(pastScope, {}, methodType)
-        else:
-            print("Scope name already exists!")
+            self.scopeDictionary[self.currentScope] = SymbolTableItem(parentKey=pastScope, returnType=methodType, symbolTable={})
 
     # TODO: Save if its a parameter or not
-    def addVarToSymbolTable(self, varType, varId):
+    def addVarToSymbolTable(self, varType, varId, varContext):
         # Gets the SymbolTable from the current scope
         tempSymbolTable = self.scopeDictionary.get(self.currentScope).symbolTable
 
-        if (tempSymbolTable):
-            exists = False
-
-            for keyVarId in tempSymbolTable:
-                if (keyVarId == varId):
-                    exists = True
-
-            if not exists:
-                tempSymbolTable[varId] = varType
-            else:
-                print("Variable already exists!")
+        if varId not in tempSymbolTable:
+            print("AAA")
+            tempSymbolTable[varId] = VarSymbolTableItem(varId, varType, self.currentScope, varContext)
+        else:
+            print("Variable already exists!")
 
         self.scopeDictionary.get(self.currentScope).symbolTable = tempSymbolTable
 
@@ -263,8 +251,13 @@ def main(argv):
         print("KEY: ", c)
 
         #print("VALUE: ", v)
-        for a in v:
-            print("     VALUE:", a.varType, a.varId)
+        print("     Parent scope: ", v.parentKey)
+        print("     Return type: ", v.returnType)
+
+        print("     Items:", v.symbolTable)
+        #for var, varItem in v.symbolTable.items():
+            #print("         VAR: ", var)
+            #print("         VarType: ", varItem.varType)
 
     #traverse(tree, parser.ruleNames)
 
