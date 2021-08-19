@@ -90,16 +90,19 @@ class DecafPrinter(DecafListener):
         try:
                 if (ctx.NUM() != None):
                     value = ctx.getChild(3).getText()
+                    # Won't be added to symbol table!
                     if (int(value) <= 0):
                         raise ArraySizeError
 
-                # TODO: - Add to symbol table!
-                #       - Check if its inside a struct or a normal block
                 parentCtx = ctx.parentCtx
                 firstChild = parentCtx.getChild(0).getText()
 
                 varType = ctx.getChild(0).getText()
                 varId = ctx.getChild(1).getText()
+
+                print("VAR: ", varId)
+                print("First child: ", varType)
+                print("----")
 
                 if firstChild == "struct":
                     structId = parentCtx.getChild(1).getText()
@@ -220,12 +223,17 @@ class DecafPrinter(DecafListener):
 
         self.scopeDictionary.get(self.currentScope).symbolTable = tempSymbolTable
 
-    # TODO: All :)
+    # Grammar saves a struct variable as
+    #   struct+ID
+    # So we're adding a struct prefix to make it match the grammar. For example, struct "A" will be saved as "structA" in the struct dictionary.
+    # This is so if we have a var saved with type structA, it will look it up directly instead of adding the prefix when searching.
     def addStructToSymbolTable(self, structId):
+        structId = "struct"+structId
         if structId not in self.structDictionary:
             self.structDictionary[structId] = StructSymbolTableItem(structId=structId, structMembers={})
 
     def addVarToStruct(self, structId, varType, varId, varContext):
+        structId = "struct"+structId
         tempStructMembers = self.structDictionary.get(structId).structMembers
 
         if varId not in tempStructMembers:
