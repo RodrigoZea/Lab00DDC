@@ -12,19 +12,24 @@ from DecafErrors import *
 
 # Stack
 class VarSymbolTableItem():
-    def __init__(self, varId, varType, scope, varContext):
+    """
+    varId: variables name.
+    varType: variable type.
+    num: if its a singular value or if it contains more, meaning its an array.
+    varContext: parameter or a normal variable.
+    size: size of the variable depending on its type.
+    offset: memory offset
+
+    scope: scope it belongs to. (CURRENTLY OMMITED)
+    """
+    def __init__(self, varId, varType, varContext, num, size):
         self.varId = varId 
         self.varType = varType
-        self.scope = scope
+        self.value = None
+        self.num = num
+        self.size = size
         self.offset = 0
         self.varContext = varContext
-
-class MethodSymbolTableItem():
-    def __init__(self, methodId, methodType):
-        self.methodId = methodId
-        self.methodType = methodType
-
-# Comunicación: Scope de SymbolTableItem con MethodId de MethodSymbolTableItem
 
 class StructSymbolTableItem():
     def __init__(self, structId, structMembers):
@@ -32,32 +37,11 @@ class StructSymbolTableItem():
         self.structMembers = structMembers
         self.size = 0
 
-# Comunicación: varType != primitivo en SymbolTableItem con structId de StructSymbolTableItem
-    # Buscar en StructSymbolTable cada variable que le pertenece a la estructura
-
 class SymbolTableItem():
     def __init__(self, parentKey, symbolTable, returnType):
         self.parentKey = parentKey
         self.returnType = returnType
         self.symbolTable = symbolTable
-
-"""
-{
-    "main": SymbolTableItem(
-        parent: "global",
-        symbolTable: [var values...]
-    ),
-    "main1": SymbolTableItem(
-        parent: "main",
-        symbolTable: []
-    )
-    "factorial": SymbolTableItem(
-        parent: "global",
-        symbolTable: [var values...]
-    )
-}
-
-"""
 
 #---------------------------------------------------------------------------------------------------
 
@@ -65,9 +49,9 @@ class DecafPrinter(DecafListener):
     def __init__(self) -> None:
         # Flags or misc
         self.errorList = []
-        self.mainFound = False
-        self.currentMethodType = None
         self.primitives = ('int', 'char', 'boolean', 'struct', 'void')
+        self.typeSizes = {'int':4, 'char':1, 'boolean':1}
+        self.boolValues = ('true', 'false')
 
         # Symbol table related
         self.currentMethodName = ""
@@ -88,6 +72,7 @@ class DecafPrinter(DecafListener):
     # Listener override methods
     def enterVarDeclaration(self, ctx: DecafParser.VarDeclarationContext):
         try:
+                value = None
                 if (ctx.NUM() != None):
                     value = ctx.getChild(3).getText()
                     # Won't be added to symbol table!
@@ -100,15 +85,11 @@ class DecafPrinter(DecafListener):
                 varType = ctx.getChild(0).getText()
                 varId = ctx.getChild(1).getText()
 
-                print("VAR: ", varId)
-                print("First child: ", varType)
-                print("----")
-
                 if firstChild == "struct":
                     structId = parentCtx.getChild(1).getText()
-                    self.addVarToStruct(structId, varType, varId, "blockVar")
+                    self.addVarToStruct(structId, varType, varId, "blockVar", value)
                 else:
-                    self.addVarToSymbolTable(varType, varId, "blockVar")
+                    self.addVarToSymbolTable(varType, varId, "blockVar", value)
 
                 return super().enterVarDeclaration(ctx)
         except ArraySizeError:
@@ -118,8 +99,6 @@ class DecafPrinter(DecafListener):
     def enterMethodDeclaration(self, ctx: DecafParser.MethodDeclarationContext):
         methodType = ctx.getChild(0).getText()
         methodName = ctx.getChild(1).getText()
-
-        self.currentMethodType = methodType
 
         self.currentMethodName = methodName
         self.enterScope(methodName)
@@ -146,7 +125,6 @@ class DecafPrinter(DecafListener):
     
     def exitMethodDeclaration(self, ctx: DecafParser.MethodDeclarationContext):
         self.nestedCounter = 1
-        self.currentMethodType = None
         self.currentMethodName = "global"
 
         self.enterScope("global")
@@ -158,7 +136,7 @@ class DecafPrinter(DecafListener):
 
         if paramType != 'void':
             paramId = ctx.getChild(1).getText()
-            self.addVarToSymbolTable(paramType, paramId, "param")
+            self.addVarToSymbolTable(paramType, paramId, "param", None)
 
         return super().enterParameter(ctx)
 
@@ -167,26 +145,52 @@ class DecafPrinter(DecafListener):
         self.addStructToSymbolTable(structId)
         return super().enterStructDeclaration(ctx)
 
+    def enterMethodCall(self, ctx: DecafParser.MethodCallContext):
+        args = ctx.getChild(2).getText()
+        #print(args)
+        return super().enterMethodCall(ctx)
+
     def enterStatement(self, ctx: DecafParser.StatementContext):
         try:
             # Children structure
             # 0: Return
             # 1: Value
             # 2: ;
-            #hasReturnStatement = False
-            statementChldn = ctx.getChildren()
 
-            if ctx.getChild(0).getText() != "return":
-                raise ReturnMissing
+            # Everything related to returns
+            if ctx.getChild(0).getText() == "return":
+                # Block context
+                blockContext = ctx.parentCtx
 
-            if self.currentMethodType == 'void':
-                if ctx.getChild(0).getText() == "return" and ctx.getChild(1).getText() != '':
-                    raise ReturnNotEmpty
-            else:
-                if ctx.getChild(1).getText() == '':
-                    raise ReturnEmpty
+                methodDeclarationCtx = blockContext.parentCtx
+                methodType = methodDeclarationCtx.getChild(0).getText()
+                expressionOom = ctx.getChild(1).getText()
 
-            #self.lookupSymbolTableVar()
+                if expressionOom != ";":
+                    if methodType in self.primitives:
+                        if expressionOom == '':
+                            raise ReturnEmpty
+                    elif methodType == "void":
+                        if expressionOom != '':
+                            raise ReturnNotEmpty
+
+                    # TODO: Restructure this after methodType in self.primitives
+                    # Check if expressionOom is not a var
+                    print("Expression: ", expressionOom)
+                    exprType = self.checkType(expressionOom)
+            
+                    print("Statement return type: ", exprType)
+                    if (exprType == "other"):
+                        print("Variable")
+                        # Check if its an operation
+                        # Else its a single var to lookup
+
+                    # if its a var...
+                    # Lookup var in symboltable
+                    #returnVar = self.lookupVarInSymbolTable(expressionOom, self.currentScope)
+                    # Get return type
+                    #if (returnVar != None):
+                        #print(returnVar.varType)
 
             return super().enterStatement(ctx)
 
@@ -206,22 +210,74 @@ class DecafPrinter(DecafListener):
         self.pastScope = self.currentScope
         self.currentScope = scope
 
+    def checkType(self, varValue):
+        if (self.checkInt(varValue) == True):
+            return "int"
+        elif(varValue in self.boolValues):
+            return "bool"
+        elif (varValue.startswith("'") and varValue.endswith("'")):
+            return "char"
+        else:
+            return "other"
+
+    def checkInt(self, value):
+        try:
+            int(value)
+            return True
+        except ValueError:
+            return False
+
+    def calculateSize(self, varType, num):
+        num = int(num)
+        if varType in self.typeSizes:
+            return self.typeSizes[varType]*num
+        elif (varType in self.structDictionary):
+            return self.structDictionary[varType].size*num
+  
     # -----------------------------------------------------------------------
+    # TODO: Offsets...
     # Symbol Table related methods
     def addScopeToSymbolTable(self, pastScope, methodType=None):
         if self.currentScope not in self.scopeDictionary:
             self.scopeDictionary[self.currentScope] = SymbolTableItem(parentKey=pastScope, returnType=methodType, symbolTable={})
 
-    def addVarToSymbolTable(self, varType, varId, varContext):
+    def addVarToSymbolTable(self, varType, varId, varContext, num):
+        if (num == None): num = 1
+        currentVarSize = self.calculateSize(varType, num)
+
         # Gets the SymbolTable from the current scope
         tempSymbolTable = self.scopeDictionary.get(self.currentScope).symbolTable
 
         if varId not in tempSymbolTable:
-            tempSymbolTable[varId] = VarSymbolTableItem(varId, varType, self.currentScope, varContext)
+            tempSymbolTable[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize)
         else:
             print("Variable already exists!")
 
         self.scopeDictionary.get(self.currentScope).symbolTable = tempSymbolTable
+
+    # Needs to search this recursively
+    # Initial call will be made with currentScope
+    def lookupVarInSymbolTable(self, varId, scopeName):
+        # Gets the SymbolTable 
+        tempSymbolTable = self.scopeDictionary.get(scopeName).symbolTable
+
+        searchedVar = None
+
+        if varId in tempSymbolTable:
+            searchedVar = tempSymbolTable[varId]
+        else:
+            newScope = self.scopeDictionary.get(scopeName).parentKey
+
+            if (newScope != None):
+                searchedVar = self.lookupVarInSymbolTable(varId, newScope)
+
+        return searchedVar
+
+    def updateVarInSymbolTable(self, varId, varValue, scopeName):
+        print("updating value")
+
+    #-------------------------------
+    # Structs
 
     # Grammar saves a struct variable as
     #   struct+ID
@@ -232,25 +288,22 @@ class DecafPrinter(DecafListener):
         if structId not in self.structDictionary:
             self.structDictionary[structId] = StructSymbolTableItem(structId=structId, structMembers={})
 
-    def addVarToStruct(self, structId, varType, varId, varContext):
+    def addVarToStruct(self, structId, varType, varId, varContext, num):
+        if (num == None): num = 1
+        currentVarSize = self.calculateSize(varType, num)
+
         structId = "struct"+structId
         tempStructMembers = self.structDictionary.get(structId).structMembers
+        tempStructSize = self.structDictionary.get(structId).size
 
         if varId not in tempStructMembers:
-            tempStructMembers[varId] = VarSymbolTableItem(varId, varType, self.currentScope, varContext)
+            tempStructMembers[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize)
+            tempStructSize += currentVarSize
         else:
             print("Variable already exists!")
 
         self.structDictionary.get(structId).structMembers = tempStructMembers
-
-    def lookupSymbolTableVar(self, varId):
-        print("sim")
-
-    def updateSymbolTableVar(self, varId, newValue):
-        print("update")
-
-    def emptySymbolTable():
-        print("empty")
+        self.structDictionary.get(structId).size = tempStructSize
 
 #---------------------------------------------------------------------------------------------------
 
@@ -268,17 +321,17 @@ def main(argv):
         print("KEY: ", c)
         print("     Parent scope: ", v.parentKey)
         print("     Return type: ", v.returnType)
-        print("     Items:", v.symbolTable)
-
-    #for var, varItem in v.symbolTable.items():
-    #print("         VAR: ", var)
-    #print("         VarType: ", varItem.varType)
+        print("     Items: ")
+        for var, varItem in v.symbolTable.items():
+            print("         VarId: " + var + ", VarType: " + varItem.varType + ", Num: " + str(varItem.num) + ", Size: " + str(varItem.size))
 
     print("--------------------------------------------")
 
     for c, v in printer.structDictionary.items():
         print("STRUCT: ", c)
-        print("     Items: ", v.structMembers)
+        print("     Items: ")
+        for var, varItem in v.structMembers.items():
+            print("         VarId: " + var + ", VarType: " + varItem.varType + ", Num: " + str(varItem.num) + ", Size: " + str(varItem.size))
 
     #traverse(tree, parser.ruleNames)
 
