@@ -1,7 +1,7 @@
 import sys
 import re
 from antlr4 import *
-from antlr4.tree.Trees import  TerminalNode
+from antlr4.tree.Trees import TerminalNode
 from antlr4.error.ErrorListener import ErrorListener
 from antlr4.error.ErrorStrategy import ErrorStrategy, DefaultErrorStrategy
 from antlr4.error.Errors import *
@@ -52,6 +52,7 @@ class DecafPrinter(DecafListener):
         self.primitives = ('int', 'char', 'boolean', 'struct', 'void')
         self.typeSizes = {'int':4, 'char':1, 'boolean':1}
         self.boolValues = ('true', 'false')
+        self.nodeTypes = {}
 
         # Symbol table related
         self.currentMethodName = ""
@@ -122,14 +123,6 @@ class DecafPrinter(DecafListener):
         self.addScopeToSymbolTable(self.pastScope)
 
         return super().enterBlock(ctx)
-    
-    def exitMethodDeclaration(self, ctx: DecafParser.MethodDeclarationContext):
-        self.nestedCounter = 1
-        self.currentMethodName = "global"
-
-        self.enterScope("global")
-
-        return super().exitMethodDeclaration(ctx)
 
     def enterParameter(self, ctx: DecafParser.ParameterContext):
         paramType = ctx.getChild(0).getText()
@@ -150,13 +143,22 @@ class DecafPrinter(DecafListener):
         #print(args)
         return super().enterMethodCall(ctx)
 
-    def enterStatement(self, ctx: DecafParser.StatementContext):
+    # ----------------------------------------------------------------------
+    # Exit
+    def exitMethodDeclaration(self, ctx: DecafParser.MethodDeclarationContext):
+        self.nestedCounter = 1
+        self.currentMethodName = "global"
+
+        self.enterScope("global")
+
+        return super().exitMethodDeclaration(ctx)
+        
+    def exitStat_return(self, ctx: DecafParser.StatementContext):
         try:
             # Children structure
             # 0: Return
             # 1: Value
             # 2: ;
-
             # Everything related to returns
             if ctx.getChild(0).getText() == "return":
                 # Block context
@@ -164,35 +166,23 @@ class DecafPrinter(DecafListener):
 
                 methodDeclarationCtx = blockContext.parentCtx
                 methodType = methodDeclarationCtx.getChild(0).getText()
-                expressionOom = ctx.getChild(1).getText()
+                expressionOom = ctx.getChild(1)
 
-                if expressionOom != ";":
+                if expressionOom.getText() != ";":
                     if methodType in self.primitives:
-                        if expressionOom == '':
+                        if expressionOom.getText() == '':
                             raise ReturnEmpty
                     elif methodType == "void":
-                        if expressionOom != '':
+                        if expressionOom.getText() != '':
                             raise ReturnNotEmpty
 
-                    # TODO: Restructure this after methodType in self.primitives
-                    # Check if expressionOom is not a var
-                    print("Expression: ", expressionOom)
-                    exprType = self.checkType(expressionOom)
-            
-                    print("Statement return type: ", exprType)
-                    if (exprType == "other"):
-                        print("Variable")
-                        # Check if its an operation
-                        # Else its a single var to lookup
+                    exprType = self.nodeTypes[expressionOom.getChild(0)]
+                    print(exprType)
 
-                    # if its a var...
-                    # Lookup var in symboltable
-                    #returnVar = self.lookupVarInSymbolTable(expressionOom, self.currentScope)
-                    # Get return type
-                    #if (returnVar != None):
-                        #print(returnVar.varType)
+                    if (exprType == methodType):
+                        print("same return type!! WOOO")
 
-            return super().enterStatement(ctx)
+            return super().exitStat_return(ctx)
 
         except ReturnMissing:
             #print("Expected return statement on method")
@@ -201,31 +191,50 @@ class DecafPrinter(DecafListener):
             #print("Missing return value on non-void method")
             a = 0
         except ReturnNotEmpty:
-           # print("Void type method should have an empty return")
+            #print("Void type method should have an empty return")
             a = 0
+
+    # NOTE: Se debe de saltar un nodo siempre porque no se está tomando en cuenta el expression padre, se debe obtener el t ipo de los literals.
+    def exitExpr_arith4(self, ctx: DecafParser.Expr_arith5Context):
+        op1 = ctx.getChild(0).getChild(0)
+        op2 = ctx.getChild(2).getChild(0)
+
+        if(self.nodeTypes[op1] == 'int' and self.nodeTypes[op2] == 'int'):
+            # Validar el tipo de expression (operador) expression, ver si ambos son int
+            # Una vez se validó, lo podemos agregar a nuestro diccionario
+            self.nodeTypes[ctx] = 'int'
+        else:
+            # Si no pues es un error.
+            self.nodeTypes[ctx] = 'error'
+        
+    def exitInt_literal(self, ctx: DecafParser.Int_literalContext):
+        self.nodeTypes[ctx] = 'int'
+
+    def exitChar_literal(self, ctx: DecafParser.Char_literalContext):
+        self.nodeTypes[ctx] = 'char'
+
+    def exitBool_literal(self, ctx: DecafParser.Bool_literalContext):
+        self.nodeTypes[ctx] = 'bool'
+
+    def exitExpr_loc(self, ctx: DecafParser.Expr_locContext):
+        self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
+        
+    def exitLocation(self, ctx: DecafParser.LocationContext):
+        myvar = self.lookupVarInSymbolTable(ctx.getText(), self.currentScope)
+        self.nodeTypes[ctx] = myvar.varType
+
+    def exitVarDeclaration(self, ctx: DecafParser.VarDeclarationContext):
+        varType = ctx.getChild(0).getText()
+        self.nodeTypes[ctx] = varType
+
+    def exitLiteral(self, ctx: DecafParser.LiteralContext):
+        self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
 
     # -----------------------------------------------------------------------
     # Non override methods
     def enterScope(self, scope):
         self.pastScope = self.currentScope
         self.currentScope = scope
-
-    def checkType(self, varValue):
-        if (self.checkInt(varValue) == True):
-            return "int"
-        elif(varValue in self.boolValues):
-            return "bool"
-        elif (varValue.startswith("'") and varValue.endswith("'")):
-            return "char"
-        else:
-            return "other"
-
-    def checkInt(self, value):
-        try:
-            int(value)
-            return True
-        except ValueError:
-            return False
 
     def calculateSize(self, varType, num):
         num = int(num)
@@ -317,6 +326,7 @@ def main(argv):
     walker = ParseTreeWalker()
     walker.walk(printer, tree)
 
+    """
     for c, v in printer.scopeDictionary.items():
         print("KEY: ", c)
         print("     Parent scope: ", v.parentKey)
@@ -332,7 +342,7 @@ def main(argv):
         print("     Items: ")
         for var, varItem in v.structMembers.items():
             print("         VarId: " + var + ", VarType: " + varItem.varType + ", Num: " + str(varItem.num) + ", Size: " + str(varItem.size))
-
+    """
     #traverse(tree, parser.ruleNames)
 
 def traverse(tree, rule_names, indent = 0):

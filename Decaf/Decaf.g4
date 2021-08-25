@@ -60,28 +60,28 @@ parameterType
     ;
 block: '{' (varDeclaration)* (statement)* '}';
 statement
-    : 'if' '(' expression ')' block ( 'else' block )?
-    | 'while' '('expression')' block
-    | 'return' expressionOom ';'
-    | methodCall ';'
-    | block
-    | location '=' expression
-    | (expression)? ';' 
+    : 'if' '(' expression ')' block ( 'else' block )? #stat_if
+    | 'while' '('expression')' block #stat_else
+    | 'return' expressionOom ';' #stat_return
+    | methodCall ';' #stat_mcall
+    | block #stat_block
+    | location '=' expression #stat_assignment
+    | (expression)? ';' #stat_line
     ;
 expressionOom: expression |;
 location: (ID|ID '[' expression ']') ('.' location)?;
 expression 
-    : location 
-    | methodCall 
-    | literal 
-    | '-' expression // Unary Minus Operation
-    | '!' expression // Unary NOT Operation
-    | '('expression')'  
-    | expression arith_op_fifth expression // * / % << >>
-    | expression arith_op_fourth expression  // + -
-    | expression arith_op_third expression // == != < <= > >=
-    | expression arith_op_second expression // &&
-    | expression arith_op_first expression // ||
+    : location #expr_loc
+    | methodCall #expr_mcall
+    | literal #expr_literal
+    | '-' expression #expr_minus // Unary Minus Operation
+    | '!' expression #expr_not // Unary NOT Operation
+    | '('expression')' #expr_parenthesis
+    | expression arith_op_fifth expression #expr_arith5 // * / % << >>
+    | expression arith_op_fourth expression #expr_arith4 // + -
+    | expression arith_op_third expression #expr_arith3 // == != < <= > >=
+    | expression arith_op_second expression #expr_arith2 // &&
+    | expression arith_op_first expression #expr_arith1 // ||
     ;
 
 methodCall: ID '(' arg1 ')';

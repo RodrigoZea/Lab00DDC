@@ -711,6 +711,17 @@ public class DecafParser extends Parser {
 	}
 
 	public static class StatementContext extends ParserRuleContext {
+		public StatementContext(ParserRuleContext parent, int invokingState) {
+			super(parent, invokingState);
+		}
+		@Override public int getRuleIndex() { return RULE_statement; }
+	 
+		public StatementContext() { }
+		public void copyFrom(StatementContext ctx) {
+			super.copyFrom(ctx);
+		}
+	}
+	public static class Stat_ifContext extends StatementContext {
 		public ExpressionContext expression() {
 			return getRuleContext(ExpressionContext.class,0);
 		}
@@ -720,19 +731,49 @@ public class DecafParser extends Parser {
 		public BlockContext block(int i) {
 			return getRuleContext(BlockContext.class,i);
 		}
+		public Stat_ifContext(StatementContext ctx) { copyFrom(ctx); }
+	}
+	public static class Stat_returnContext extends StatementContext {
 		public ExpressionOomContext expressionOom() {
 			return getRuleContext(ExpressionOomContext.class,0);
 		}
-		public MethodCallContext methodCall() {
-			return getRuleContext(MethodCallContext.class,0);
-		}
+		public Stat_returnContext(StatementContext ctx) { copyFrom(ctx); }
+	}
+	public static class Stat_assignmentContext extends StatementContext {
 		public LocationContext location() {
 			return getRuleContext(LocationContext.class,0);
 		}
-		public StatementContext(ParserRuleContext parent, int invokingState) {
-			super(parent, invokingState);
+		public ExpressionContext expression() {
+			return getRuleContext(ExpressionContext.class,0);
 		}
-		@Override public int getRuleIndex() { return RULE_statement; }
+		public Stat_assignmentContext(StatementContext ctx) { copyFrom(ctx); }
+	}
+	public static class Stat_elseContext extends StatementContext {
+		public ExpressionContext expression() {
+			return getRuleContext(ExpressionContext.class,0);
+		}
+		public BlockContext block() {
+			return getRuleContext(BlockContext.class,0);
+		}
+		public Stat_elseContext(StatementContext ctx) { copyFrom(ctx); }
+	}
+	public static class Stat_blockContext extends StatementContext {
+		public BlockContext block() {
+			return getRuleContext(BlockContext.class,0);
+		}
+		public Stat_blockContext(StatementContext ctx) { copyFrom(ctx); }
+	}
+	public static class Stat_lineContext extends StatementContext {
+		public ExpressionContext expression() {
+			return getRuleContext(ExpressionContext.class,0);
+		}
+		public Stat_lineContext(StatementContext ctx) { copyFrom(ctx); }
+	}
+	public static class Stat_mcallContext extends StatementContext {
+		public MethodCallContext methodCall() {
+			return getRuleContext(MethodCallContext.class,0);
+		}
+		public Stat_mcallContext(StatementContext ctx) { copyFrom(ctx); }
 	}
 
 	public final StatementContext statement() throws RecognitionException {
@@ -744,6 +785,7 @@ public class DecafParser extends Parser {
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,13,_ctx) ) {
 			case 1:
+				_localctx = new Stat_ifContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(158);
@@ -771,6 +813,7 @@ public class DecafParser extends Parser {
 				}
 				break;
 			case 2:
+				_localctx = new Stat_elseContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(167);
@@ -786,6 +829,7 @@ public class DecafParser extends Parser {
 				}
 				break;
 			case 3:
+				_localctx = new Stat_returnContext(_localctx);
 				enterOuterAlt(_localctx, 3);
 				{
 				setState(173);
@@ -797,6 +841,7 @@ public class DecafParser extends Parser {
 				}
 				break;
 			case 4:
+				_localctx = new Stat_mcallContext(_localctx);
 				enterOuterAlt(_localctx, 4);
 				{
 				setState(177);
@@ -806,6 +851,7 @@ public class DecafParser extends Parser {
 				}
 				break;
 			case 5:
+				_localctx = new Stat_blockContext(_localctx);
 				enterOuterAlt(_localctx, 5);
 				{
 				setState(180);
@@ -813,6 +859,7 @@ public class DecafParser extends Parser {
 				}
 				break;
 			case 6:
+				_localctx = new Stat_assignmentContext(_localctx);
 				enterOuterAlt(_localctx, 6);
 				{
 				setState(181);
@@ -824,6 +871,7 @@ public class DecafParser extends Parser {
 				}
 				break;
 			case 7:
+				_localctx = new Stat_lineContext(_localctx);
 				enterOuterAlt(_localctx, 7);
 				{
 				setState(186);
@@ -972,15 +1020,101 @@ public class DecafParser extends Parser {
 	}
 
 	public static class ExpressionContext extends ParserRuleContext {
-		public LocationContext location() {
-			return getRuleContext(LocationContext.class,0);
+		public ExpressionContext(ParserRuleContext parent, int invokingState) {
+			super(parent, invokingState);
 		}
-		public MethodCallContext methodCall() {
-			return getRuleContext(MethodCallContext.class,0);
+		@Override public int getRuleIndex() { return RULE_expression; }
+	 
+		public ExpressionContext() { }
+		public void copyFrom(ExpressionContext ctx) {
+			super.copyFrom(ctx);
 		}
+	}
+	public static class Expr_literalContext extends ExpressionContext {
 		public LiteralContext literal() {
 			return getRuleContext(LiteralContext.class,0);
 		}
+		public Expr_literalContext(ExpressionContext ctx) { copyFrom(ctx); }
+	}
+	public static class Expr_locContext extends ExpressionContext {
+		public LocationContext location() {
+			return getRuleContext(LocationContext.class,0);
+		}
+		public Expr_locContext(ExpressionContext ctx) { copyFrom(ctx); }
+	}
+	public static class Expr_parenthesisContext extends ExpressionContext {
+		public ExpressionContext expression() {
+			return getRuleContext(ExpressionContext.class,0);
+		}
+		public Expr_parenthesisContext(ExpressionContext ctx) { copyFrom(ctx); }
+	}
+	public static class Expr_mcallContext extends ExpressionContext {
+		public MethodCallContext methodCall() {
+			return getRuleContext(MethodCallContext.class,0);
+		}
+		public Expr_mcallContext(ExpressionContext ctx) { copyFrom(ctx); }
+	}
+	public static class Expr_minusContext extends ExpressionContext {
+		public ExpressionContext expression() {
+			return getRuleContext(ExpressionContext.class,0);
+		}
+		public Expr_minusContext(ExpressionContext ctx) { copyFrom(ctx); }
+	}
+	public static class Expr_arith1Context extends ExpressionContext {
+		public List<ExpressionContext> expression() {
+			return getRuleContexts(ExpressionContext.class);
+		}
+		public ExpressionContext expression(int i) {
+			return getRuleContext(ExpressionContext.class,i);
+		}
+		public Arith_op_firstContext arith_op_first() {
+			return getRuleContext(Arith_op_firstContext.class,0);
+		}
+		public Expr_arith1Context(ExpressionContext ctx) { copyFrom(ctx); }
+	}
+	public static class Expr_arith2Context extends ExpressionContext {
+		public List<ExpressionContext> expression() {
+			return getRuleContexts(ExpressionContext.class);
+		}
+		public ExpressionContext expression(int i) {
+			return getRuleContext(ExpressionContext.class,i);
+		}
+		public Arith_op_secondContext arith_op_second() {
+			return getRuleContext(Arith_op_secondContext.class,0);
+		}
+		public Expr_arith2Context(ExpressionContext ctx) { copyFrom(ctx); }
+	}
+	public static class Expr_notContext extends ExpressionContext {
+		public ExpressionContext expression() {
+			return getRuleContext(ExpressionContext.class,0);
+		}
+		public Expr_notContext(ExpressionContext ctx) { copyFrom(ctx); }
+	}
+	public static class Expr_arith3Context extends ExpressionContext {
+		public List<ExpressionContext> expression() {
+			return getRuleContexts(ExpressionContext.class);
+		}
+		public ExpressionContext expression(int i) {
+			return getRuleContext(ExpressionContext.class,i);
+		}
+		public Arith_op_thirdContext arith_op_third() {
+			return getRuleContext(Arith_op_thirdContext.class,0);
+		}
+		public Expr_arith3Context(ExpressionContext ctx) { copyFrom(ctx); }
+	}
+	public static class Expr_arith4Context extends ExpressionContext {
+		public List<ExpressionContext> expression() {
+			return getRuleContexts(ExpressionContext.class);
+		}
+		public ExpressionContext expression(int i) {
+			return getRuleContext(ExpressionContext.class,i);
+		}
+		public Arith_op_fourthContext arith_op_fourth() {
+			return getRuleContext(Arith_op_fourthContext.class,0);
+		}
+		public Expr_arith4Context(ExpressionContext ctx) { copyFrom(ctx); }
+	}
+	public static class Expr_arith5Context extends ExpressionContext {
 		public List<ExpressionContext> expression() {
 			return getRuleContexts(ExpressionContext.class);
 		}
@@ -990,22 +1124,7 @@ public class DecafParser extends Parser {
 		public Arith_op_fifthContext arith_op_fifth() {
 			return getRuleContext(Arith_op_fifthContext.class,0);
 		}
-		public Arith_op_fourthContext arith_op_fourth() {
-			return getRuleContext(Arith_op_fourthContext.class,0);
-		}
-		public Arith_op_thirdContext arith_op_third() {
-			return getRuleContext(Arith_op_thirdContext.class,0);
-		}
-		public Arith_op_secondContext arith_op_second() {
-			return getRuleContext(Arith_op_secondContext.class,0);
-		}
-		public Arith_op_firstContext arith_op_first() {
-			return getRuleContext(Arith_op_firstContext.class,0);
-		}
-		public ExpressionContext(ParserRuleContext parent, int invokingState) {
-			super(parent, invokingState);
-		}
-		@Override public int getRuleIndex() { return RULE_expression; }
+		public Expr_arith5Context(ExpressionContext ctx) { copyFrom(ctx); }
 	}
 
 	public final ExpressionContext expression() throws RecognitionException {
@@ -1028,24 +1147,37 @@ public class DecafParser extends Parser {
 			switch ( getInterpreter().adaptivePredict(_input,17,_ctx) ) {
 			case 1:
 				{
+				_localctx = new Expr_locContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
+
 				setState(208);
 				location();
 				}
 				break;
 			case 2:
 				{
+				_localctx = new Expr_mcallContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(209);
 				methodCall();
 				}
 				break;
 			case 3:
 				{
+				_localctx = new Expr_literalContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(210);
 				literal();
 				}
 				break;
 			case 4:
 				{
+				_localctx = new Expr_minusContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(211);
 				match(T__21);
 				setState(212);
@@ -1054,6 +1186,9 @@ public class DecafParser extends Parser {
 				break;
 			case 5:
 				{
+				_localctx = new Expr_notContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(213);
 				match(T__22);
 				setState(214);
@@ -1062,6 +1197,9 @@ public class DecafParser extends Parser {
 				break;
 			case 6:
 				{
+				_localctx = new Expr_parenthesisContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(215);
 				match(T__12);
 				setState(216);
@@ -1085,7 +1223,7 @@ public class DecafParser extends Parser {
 					switch ( getInterpreter().adaptivePredict(_input,18,_ctx) ) {
 					case 1:
 						{
-						_localctx = new ExpressionContext(_parentctx, _parentState);
+						_localctx = new Expr_arith5Context(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(221);
 						if (!(precpred(_ctx, 5))) throw new FailedPredicateException(this, "precpred(_ctx, 5)");
@@ -1097,7 +1235,7 @@ public class DecafParser extends Parser {
 						break;
 					case 2:
 						{
-						_localctx = new ExpressionContext(_parentctx, _parentState);
+						_localctx = new Expr_arith4Context(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(225);
 						if (!(precpred(_ctx, 4))) throw new FailedPredicateException(this, "precpred(_ctx, 4)");
@@ -1109,7 +1247,7 @@ public class DecafParser extends Parser {
 						break;
 					case 3:
 						{
-						_localctx = new ExpressionContext(_parentctx, _parentState);
+						_localctx = new Expr_arith3Context(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(229);
 						if (!(precpred(_ctx, 3))) throw new FailedPredicateException(this, "precpred(_ctx, 3)");
@@ -1121,7 +1259,7 @@ public class DecafParser extends Parser {
 						break;
 					case 4:
 						{
-						_localctx = new ExpressionContext(_parentctx, _parentState);
+						_localctx = new Expr_arith2Context(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(233);
 						if (!(precpred(_ctx, 2))) throw new FailedPredicateException(this, "precpred(_ctx, 2)");
@@ -1133,7 +1271,7 @@ public class DecafParser extends Parser {
 						break;
 					case 5:
 						{
-						_localctx = new ExpressionContext(_parentctx, _parentState);
+						_localctx = new Expr_arith1Context(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(237);
 						if (!(precpred(_ctx, 1))) throw new FailedPredicateException(this, "precpred(_ctx, 1)");

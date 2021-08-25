@@ -963,9 +963,24 @@ class DecafParser ( Parser ):
             super().__init__(parent, invokingState)
             self.parser = parser
 
+
+        def getRuleIndex(self):
+            return DecafParser.RULE_statement
+
+     
+        def copyFrom(self, ctx:ParserRuleContext):
+            super().copyFrom(ctx)
+
+
+
+    class Stat_ifContext(StatementContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a DecafParser.StatementContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
         def expression(self):
             return self.getTypedRuleContext(DecafParser.ExpressionContext,0)
-
 
         def block(self, i:int=None):
             if i is None:
@@ -974,29 +989,133 @@ class DecafParser ( Parser ):
                 return self.getTypedRuleContext(DecafParser.BlockContext,i)
 
 
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterStat_if" ):
+                listener.enterStat_if(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitStat_if" ):
+                listener.exitStat_if(self)
+
+
+    class Stat_returnContext(StatementContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a DecafParser.StatementContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
         def expressionOom(self):
             return self.getTypedRuleContext(DecafParser.ExpressionOomContext,0)
 
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterStat_return" ):
+                listener.enterStat_return(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitStat_return" ):
+                listener.exitStat_return(self)
+
+
+    class Stat_assignmentContext(StatementContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a DecafParser.StatementContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def location(self):
+            return self.getTypedRuleContext(DecafParser.LocationContext,0)
+
+        def expression(self):
+            return self.getTypedRuleContext(DecafParser.ExpressionContext,0)
+
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterStat_assignment" ):
+                listener.enterStat_assignment(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitStat_assignment" ):
+                listener.exitStat_assignment(self)
+
+
+    class Stat_elseContext(StatementContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a DecafParser.StatementContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def expression(self):
+            return self.getTypedRuleContext(DecafParser.ExpressionContext,0)
+
+        def block(self):
+            return self.getTypedRuleContext(DecafParser.BlockContext,0)
+
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterStat_else" ):
+                listener.enterStat_else(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitStat_else" ):
+                listener.exitStat_else(self)
+
+
+    class Stat_blockContext(StatementContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a DecafParser.StatementContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def block(self):
+            return self.getTypedRuleContext(DecafParser.BlockContext,0)
+
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterStat_block" ):
+                listener.enterStat_block(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitStat_block" ):
+                listener.exitStat_block(self)
+
+
+    class Stat_lineContext(StatementContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a DecafParser.StatementContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def expression(self):
+            return self.getTypedRuleContext(DecafParser.ExpressionContext,0)
+
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterStat_line" ):
+                listener.enterStat_line(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitStat_line" ):
+                listener.exitStat_line(self)
+
+
+    class Stat_mcallContext(StatementContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a DecafParser.StatementContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
 
         def methodCall(self):
             return self.getTypedRuleContext(DecafParser.MethodCallContext,0)
 
 
-        def location(self):
-            return self.getTypedRuleContext(DecafParser.LocationContext,0)
-
-
-        def getRuleIndex(self):
-            return DecafParser.RULE_statement
-
         def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterStatement" ):
-                listener.enterStatement(self)
+            if hasattr( listener, "enterStat_mcall" ):
+                listener.enterStat_mcall(self)
 
         def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitStatement" ):
-                listener.exitStatement(self)
-
+            if hasattr( listener, "exitStat_mcall" ):
+                listener.exitStat_mcall(self)
 
 
 
@@ -1010,6 +1129,7 @@ class DecafParser ( Parser ):
             self._errHandler.sync(self)
             la_ = self._interp.adaptivePredict(self._input,13,self._ctx)
             if la_ == 1:
+                localctx = DecafParser.Stat_ifContext(self, localctx)
                 self.enterOuterAlt(localctx, 1)
                 self.state = 158
                 self.match(DecafParser.T__15)
@@ -1034,6 +1154,7 @@ class DecafParser ( Parser ):
                 pass
 
             elif la_ == 2:
+                localctx = DecafParser.Stat_elseContext(self, localctx)
                 self.enterOuterAlt(localctx, 2)
                 self.state = 167
                 self.match(DecafParser.T__17)
@@ -1048,6 +1169,7 @@ class DecafParser ( Parser ):
                 pass
 
             elif la_ == 3:
+                localctx = DecafParser.Stat_returnContext(self, localctx)
                 self.enterOuterAlt(localctx, 3)
                 self.state = 173
                 self.match(DecafParser.T__18)
@@ -1058,6 +1180,7 @@ class DecafParser ( Parser ):
                 pass
 
             elif la_ == 4:
+                localctx = DecafParser.Stat_mcallContext(self, localctx)
                 self.enterOuterAlt(localctx, 4)
                 self.state = 177
                 self.methodCall()
@@ -1066,12 +1189,14 @@ class DecafParser ( Parser ):
                 pass
 
             elif la_ == 5:
+                localctx = DecafParser.Stat_blockContext(self, localctx)
                 self.enterOuterAlt(localctx, 5)
                 self.state = 180
                 self.block()
                 pass
 
             elif la_ == 6:
+                localctx = DecafParser.Stat_assignmentContext(self, localctx)
                 self.enterOuterAlt(localctx, 6)
                 self.state = 181
                 self.location()
@@ -1082,6 +1207,7 @@ class DecafParser ( Parser ):
                 pass
 
             elif la_ == 7:
+                localctx = DecafParser.Stat_lineContext(self, localctx)
                 self.enterOuterAlt(localctx, 7)
                 self.state = 186
                 self._errHandler.sync(self)
@@ -1243,17 +1369,115 @@ class DecafParser ( Parser ):
             super().__init__(parent, invokingState)
             self.parser = parser
 
+
+        def getRuleIndex(self):
+            return DecafParser.RULE_expression
+
+     
+        def copyFrom(self, ctx:ParserRuleContext):
+            super().copyFrom(ctx)
+
+
+    class Expr_literalContext(ExpressionContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a DecafParser.ExpressionContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def literal(self):
+            return self.getTypedRuleContext(DecafParser.LiteralContext,0)
+
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterExpr_literal" ):
+                listener.enterExpr_literal(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitExpr_literal" ):
+                listener.exitExpr_literal(self)
+
+
+    class Expr_locContext(ExpressionContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a DecafParser.ExpressionContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
         def location(self):
             return self.getTypedRuleContext(DecafParser.LocationContext,0)
 
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterExpr_loc" ):
+                listener.enterExpr_loc(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitExpr_loc" ):
+                listener.exitExpr_loc(self)
+
+
+    class Expr_parenthesisContext(ExpressionContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a DecafParser.ExpressionContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def expression(self):
+            return self.getTypedRuleContext(DecafParser.ExpressionContext,0)
+
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterExpr_parenthesis" ):
+                listener.enterExpr_parenthesis(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitExpr_parenthesis" ):
+                listener.exitExpr_parenthesis(self)
+
+
+    class Expr_mcallContext(ExpressionContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a DecafParser.ExpressionContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
 
         def methodCall(self):
             return self.getTypedRuleContext(DecafParser.MethodCallContext,0)
 
 
-        def literal(self):
-            return self.getTypedRuleContext(DecafParser.LiteralContext,0)
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterExpr_mcall" ):
+                listener.enterExpr_mcall(self)
 
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitExpr_mcall" ):
+                listener.exitExpr_mcall(self)
+
+
+    class Expr_minusContext(ExpressionContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a DecafParser.ExpressionContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def expression(self):
+            return self.getTypedRuleContext(DecafParser.ExpressionContext,0)
+
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterExpr_minus" ):
+                listener.enterExpr_minus(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitExpr_minus" ):
+                listener.exitExpr_minus(self)
+
+
+    class Expr_arith1Context(ExpressionContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a DecafParser.ExpressionContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
 
         def expression(self, i:int=None):
             if i is None:
@@ -1261,37 +1485,136 @@ class DecafParser ( Parser ):
             else:
                 return self.getTypedRuleContext(DecafParser.ExpressionContext,i)
 
-
-        def arith_op_fifth(self):
-            return self.getTypedRuleContext(DecafParser.Arith_op_fifthContext,0)
-
-
-        def arith_op_fourth(self):
-            return self.getTypedRuleContext(DecafParser.Arith_op_fourthContext,0)
+        def arith_op_first(self):
+            return self.getTypedRuleContext(DecafParser.Arith_op_firstContext,0)
 
 
-        def arith_op_third(self):
-            return self.getTypedRuleContext(DecafParser.Arith_op_thirdContext,0)
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterExpr_arith1" ):
+                listener.enterExpr_arith1(self)
 
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitExpr_arith1" ):
+                listener.exitExpr_arith1(self)
+
+
+    class Expr_arith2Context(ExpressionContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a DecafParser.ExpressionContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def expression(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(DecafParser.ExpressionContext)
+            else:
+                return self.getTypedRuleContext(DecafParser.ExpressionContext,i)
 
         def arith_op_second(self):
             return self.getTypedRuleContext(DecafParser.Arith_op_secondContext,0)
 
 
-        def arith_op_first(self):
-            return self.getTypedRuleContext(DecafParser.Arith_op_firstContext,0)
-
-
-        def getRuleIndex(self):
-            return DecafParser.RULE_expression
-
         def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterExpression" ):
-                listener.enterExpression(self)
+            if hasattr( listener, "enterExpr_arith2" ):
+                listener.enterExpr_arith2(self)
 
         def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitExpression" ):
-                listener.exitExpression(self)
+            if hasattr( listener, "exitExpr_arith2" ):
+                listener.exitExpr_arith2(self)
+
+
+    class Expr_notContext(ExpressionContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a DecafParser.ExpressionContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def expression(self):
+            return self.getTypedRuleContext(DecafParser.ExpressionContext,0)
+
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterExpr_not" ):
+                listener.enterExpr_not(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitExpr_not" ):
+                listener.exitExpr_not(self)
+
+
+    class Expr_arith3Context(ExpressionContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a DecafParser.ExpressionContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def expression(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(DecafParser.ExpressionContext)
+            else:
+                return self.getTypedRuleContext(DecafParser.ExpressionContext,i)
+
+        def arith_op_third(self):
+            return self.getTypedRuleContext(DecafParser.Arith_op_thirdContext,0)
+
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterExpr_arith3" ):
+                listener.enterExpr_arith3(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitExpr_arith3" ):
+                listener.exitExpr_arith3(self)
+
+
+    class Expr_arith4Context(ExpressionContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a DecafParser.ExpressionContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def expression(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(DecafParser.ExpressionContext)
+            else:
+                return self.getTypedRuleContext(DecafParser.ExpressionContext,i)
+
+        def arith_op_fourth(self):
+            return self.getTypedRuleContext(DecafParser.Arith_op_fourthContext,0)
+
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterExpr_arith4" ):
+                listener.enterExpr_arith4(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitExpr_arith4" ):
+                listener.exitExpr_arith4(self)
+
+
+    class Expr_arith5Context(ExpressionContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a DecafParser.ExpressionContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def expression(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(DecafParser.ExpressionContext)
+            else:
+                return self.getTypedRuleContext(DecafParser.ExpressionContext,i)
+
+        def arith_op_fifth(self):
+            return self.getTypedRuleContext(DecafParser.Arith_op_fifthContext,0)
+
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterExpr_arith5" ):
+                listener.enterExpr_arith5(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitExpr_arith5" ):
+                listener.exitExpr_arith5(self)
 
 
 
@@ -1308,21 +1631,34 @@ class DecafParser ( Parser ):
             self._errHandler.sync(self)
             la_ = self._interp.adaptivePredict(self._input,17,self._ctx)
             if la_ == 1:
+                localctx = DecafParser.Expr_locContext(self, localctx)
+                self._ctx = localctx
+                _prevctx = localctx
+
                 self.state = 208
                 self.location()
                 pass
 
             elif la_ == 2:
+                localctx = DecafParser.Expr_mcallContext(self, localctx)
+                self._ctx = localctx
+                _prevctx = localctx
                 self.state = 209
                 self.methodCall()
                 pass
 
             elif la_ == 3:
+                localctx = DecafParser.Expr_literalContext(self, localctx)
+                self._ctx = localctx
+                _prevctx = localctx
                 self.state = 210
                 self.literal()
                 pass
 
             elif la_ == 4:
+                localctx = DecafParser.Expr_minusContext(self, localctx)
+                self._ctx = localctx
+                _prevctx = localctx
                 self.state = 211
                 self.match(DecafParser.T__21)
                 self.state = 212
@@ -1330,6 +1666,9 @@ class DecafParser ( Parser ):
                 pass
 
             elif la_ == 5:
+                localctx = DecafParser.Expr_notContext(self, localctx)
+                self._ctx = localctx
+                _prevctx = localctx
                 self.state = 213
                 self.match(DecafParser.T__22)
                 self.state = 214
@@ -1337,6 +1676,9 @@ class DecafParser ( Parser ):
                 pass
 
             elif la_ == 6:
+                localctx = DecafParser.Expr_parenthesisContext(self, localctx)
+                self._ctx = localctx
+                _prevctx = localctx
                 self.state = 215
                 self.match(DecafParser.T__12)
                 self.state = 216
@@ -1359,7 +1701,7 @@ class DecafParser ( Parser ):
                     self._errHandler.sync(self)
                     la_ = self._interp.adaptivePredict(self._input,18,self._ctx)
                     if la_ == 1:
-                        localctx = DecafParser.ExpressionContext(self, _parentctx, _parentState)
+                        localctx = DecafParser.Expr_arith5Context(self, DecafParser.ExpressionContext(self, _parentctx, _parentState))
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
                         self.state = 221
                         if not self.precpred(self._ctx, 5):
@@ -1372,7 +1714,7 @@ class DecafParser ( Parser ):
                         pass
 
                     elif la_ == 2:
-                        localctx = DecafParser.ExpressionContext(self, _parentctx, _parentState)
+                        localctx = DecafParser.Expr_arith4Context(self, DecafParser.ExpressionContext(self, _parentctx, _parentState))
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
                         self.state = 225
                         if not self.precpred(self._ctx, 4):
@@ -1385,7 +1727,7 @@ class DecafParser ( Parser ):
                         pass
 
                     elif la_ == 3:
-                        localctx = DecafParser.ExpressionContext(self, _parentctx, _parentState)
+                        localctx = DecafParser.Expr_arith3Context(self, DecafParser.ExpressionContext(self, _parentctx, _parentState))
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
                         self.state = 229
                         if not self.precpred(self._ctx, 3):
@@ -1398,7 +1740,7 @@ class DecafParser ( Parser ):
                         pass
 
                     elif la_ == 4:
-                        localctx = DecafParser.ExpressionContext(self, _parentctx, _parentState)
+                        localctx = DecafParser.Expr_arith2Context(self, DecafParser.ExpressionContext(self, _parentctx, _parentState))
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
                         self.state = 233
                         if not self.precpred(self._ctx, 2):
@@ -1411,7 +1753,7 @@ class DecafParser ( Parser ):
                         pass
 
                     elif la_ == 5:
-                        localctx = DecafParser.ExpressionContext(self, _parentctx, _parentState)
+                        localctx = DecafParser.Expr_arith1Context(self, DecafParser.ExpressionContext(self, _parentctx, _parentState))
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
                         self.state = 237
                         if not self.precpred(self._ctx, 1):

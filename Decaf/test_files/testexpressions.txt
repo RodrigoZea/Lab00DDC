@@ -1,0 +1,22 @@
+class Program
+{
+
+
+
+void main(void)
+{
+	factorial();
+	return;
+}
+
+
+int factorial(void)
+{
+	int n;
+	n = 1;
+	return n+2;
+}
+
+
+
+}
