@@ -140,8 +140,14 @@ class DecafPrinter(DecafListener):
 
     def enterMethodCall(self, ctx: DecafParser.MethodCallContext):
         args = ctx.getChild(2).getText()
-        #print(args)
+        print(args)
         return super().enterMethodCall(ctx)
+
+    def enterExpr_mcall(self, ctx: DecafParser.Expr_mcallContext):
+        print("expr_mcall")
+
+    def enterStat_mcall(self, ctx: DecafParser.Stat_mcallContext):
+        print("stat_mcall")
 
     # ----------------------------------------------------------------------
     # Exit
@@ -220,6 +226,7 @@ class DecafPrinter(DecafListener):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
         
     def exitLocation(self, ctx: DecafParser.LocationContext):
+        print("Var: ", ctx.getText())
         myvar = self.lookupVarInSymbolTable(ctx.getText(), self.currentScope)
         self.nodeTypes[ctx] = myvar.varType
 
@@ -264,6 +271,8 @@ class DecafPrinter(DecafListener):
 
         self.scopeDictionary.get(self.currentScope).symbolTable = tempSymbolTable
 
+        #print("Added var: " + varType + " " + varId)
+
     # Needs to search this recursively
     # Initial call will be made with currentScope
     def lookupVarInSymbolTable(self, varId, scopeName):
@@ -271,16 +280,26 @@ class DecafPrinter(DecafListener):
         tempSymbolTable = self.scopeDictionary.get(scopeName).symbolTable
 
         searchedVar = None
-
-        if varId in tempSymbolTable:
-            searchedVar = tempSymbolTable[varId]
+        #print(varId)
+        # b.c.a | z.a
+        # b | z
+        # c | a
+        # a
+        if ("." in varId):
+        # Procedure if it contains a . (meaning its a struct property)
+            parts = varId.split(".")
+            print(parts)
         else:
-            newScope = self.scopeDictionary.get(scopeName).parentKey
+        # Procedure for a normal var
+            if varId in tempSymbolTable:
+                searchedVar = tempSymbolTable[varId]
+            else:
+                newScope = self.scopeDictionary.get(scopeName).parentKey
 
-            if (newScope != None):
-                searchedVar = self.lookupVarInSymbolTable(varId, newScope)
+                if (newScope != None):
+                    searchedVar = self.lookupVarInSymbolTable(varId, newScope)
 
-        return searchedVar
+            return searchedVar
 
     def updateVarInSymbolTable(self, varId, varValue, scopeName):
         print("updating value")

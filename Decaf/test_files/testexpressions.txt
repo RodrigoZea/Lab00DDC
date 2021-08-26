@@ -1,22 +1,22 @@
 class Program
 {
 
-
-
 void main(void)
 {
-	factorial();
+	int a;
+	int b;
+	b=0;
+	a=factorial(b);
+	factorial(b);
 	return;
 }
 
 
-int factorial(void)
+int factorial(int b)
 {
 	int n;
 	n = 1;
 	return n+2;
 }
-
-
 
 }
