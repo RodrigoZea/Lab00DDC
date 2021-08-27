@@ -53,6 +53,7 @@ class DecafPrinter(DecafListener):
         self.typeSizes = {'int':4, 'char':1, 'boolean':1}
         self.boolValues = ('true', 'false')
         self.nodeTypes = {}
+        self.mainFound = False
 
         # Symbol table related
         self.currentMethodName = ""
@@ -88,11 +89,22 @@ class DecafPrinter(DecafListener):
 
                 if firstChild == "struct":
                     structId = parentCtx.getChild(1).getText()
-                    self.addVarToStruct(structId, varType, varId, "blockVar", value)
-                else:
-                    self.addVarToSymbolTable(varType, varId, "blockVar", value)
+                    added = self.addVarToStruct(structId, varType, varId, "blockVar", value)
 
-                return super().enterVarDeclaration(ctx)
+                    if (added):
+                        self.nodeTypes[ctx] = 'void'
+                    else:
+                        # TODO: Add error
+                        self.nodeTypes[ctx] = 'error'
+                else:
+                    added = self.addVarToSymbolTable(varType, varId, "blockVar", value)
+
+                    if (added):
+                        self.nodeTypes[ctx] = 'void'
+                    else:
+                        # TODO: Add error
+                        self.nodeTypes[ctx] = 'error'
+
         except ArraySizeError:
             #print("ArraySizeError at line %d: Array size must be bigger than 0" % ctx.start.line)
             a = 0
@@ -104,10 +116,14 @@ class DecafPrinter(DecafListener):
         self.currentMethodName = methodName
         self.enterScope(methodName)
 
-        # TODO: Add to symbol table!
-        self.addScopeToSymbolTable(self.pastScope, methodType)
+        # Add to symbol table!
+        added = self.addScopeToSymbolTable(self.pastScope, methodType)
 
-        return super().enterMethodDeclaration(ctx)
+        if (added):
+            self.nodeTypes[ctx] = 'void'
+        else:
+            # TODO: Add error
+            self.nodeTypes[ctx] = 'error'
 
     def enterBlock(self, ctx: DecafParser.BlockContext):
         parentCtx = ctx.parentCtx
@@ -119,46 +135,72 @@ class DecafPrinter(DecafListener):
             self.nestedCounter += 1
             self.enterScope(nestedBlockName)
         
-        # TODO: Add to symbol table!
-        self.addScopeToSymbolTable(self.pastScope)
+        # Add to symbol table!
+        added = self.addScopeToSymbolTable(self.pastScope)
 
-        return super().enterBlock(ctx)
+        if (added):
+            self.nodeTypes[ctx] = 'void'
+        else:
+            # TODO: Add error
+            self.nodeTypes[ctx] = 'error'
 
     def enterParameter(self, ctx: DecafParser.ParameterContext):
         paramType = ctx.getChild(0).getText()
 
         if paramType != 'void':
             paramId = ctx.getChild(1).getText()
-            self.addVarToSymbolTable(paramType, paramId, "param", None)
 
-        return super().enterParameter(ctx)
+            added = self.addVarToSymbolTable(paramType, paramId, "param", None)
+            if (added):
+                self.nodeTypes[ctx] = 'void'
+            else:
+                # TODO: Add error
+                self.nodeTypes[ctx] = 'error'
 
     def enterStructDeclaration(self, ctx: DecafParser.StructDeclarationContext):
         structId = ctx.getChild(1).getText()
         self.addStructToSymbolTable(structId)
-        return super().enterStructDeclaration(ctx)
-
-    def enterMethodCall(self, ctx: DecafParser.MethodCallContext):
-        args = ctx.getChild(2).getText()
-        print(args)
-        return super().enterMethodCall(ctx)
-
-    def enterExpr_mcall(self, ctx: DecafParser.Expr_mcallContext):
-        print("expr_mcall")
-
-    def enterStat_mcall(self, ctx: DecafParser.Stat_mcallContext):
-        print("stat_mcall")
 
     # ----------------------------------------------------------------------
     # Exit
     def exitMethodDeclaration(self, ctx: DecafParser.MethodDeclarationContext):
+        methodName = ctx.getChild(1).getText()
+        if (methodName == 'main'):
+            self.mainFound = True
+
         self.nestedCounter = 1
         self.currentMethodName = "global"
 
         self.enterScope("global")
 
-        return super().exitMethodDeclaration(ctx)
+    def exitMethodCall(self, ctx: DecafParser.MethodCallContext):
+        methodName = ctx.getChild(0).getText()
+        args = ctx.getChild(2).getText()
+
+        methodObj = self.lookupMethodInSymbolTable(methodName)
+
+        if (methodObj != None):
+            methodCallTypes = []
+            for child in ctx.children:
+                if type(child) == DecafParser.Expr_locContext:
+                    methodCallTypes.append(self.nodeTypes[child])
+
+            # TODO: Check with more than 1 arg and no args
+            paramsEquality = self.compareParameters(methodObj, args, methodCallTypes)
+
+            if paramsEquality:
+                self.nodeTypes[ctx] = 'void'
+            else:
+                # TODO: ADD ERROR
+                self.nodeTypes[ctx] = 'error'
+        else:
+            # TODO: ADD ERROR
+            print("Method doesn't exist in symbol table or hasn't been declared yet.")
         
+    def exitProgram(self, ctx: DecafParser.ProgramContext):
+        if (not self.mainFound):
+            self.nodeTypes[ctx] = 'error'
+
     def exitStat_return(self, ctx: DecafParser.StatementContext):
         try:
             # Children structure
@@ -200,7 +242,22 @@ class DecafPrinter(DecafListener):
             #print("Void type method should have an empty return")
             a = 0
 
+    # TODO: Agregar diferentes operadores
     # NOTE: Se debe de saltar un nodo siempre porque no se está tomando en cuenta el expression padre, se debe obtener el t ipo de los literals.
+    # TODO: Agregar errores
+    # // * / % << >>
+    def exitExpr_arith5(self, ctx: DecafParser.Expr_arith5Context):
+        op1 = ctx.getChild(0).getChild(0)
+        op2 = ctx.getChild(2).getChild(0)
+
+        if(self.nodeTypes[op1] == 'int' and self.nodeTypes[op2] == 'int'):
+            # Validar el tipo de expression (operador) expression, ver si ambos son int
+            # Una vez se validó, lo podemos agregar a nuestro diccionario
+            self.nodeTypes[ctx] = 'int'
+        else:
+            # Si no pues es un error.
+            self.nodeTypes[ctx] = 'error'
+    # // + -
     def exitExpr_arith4(self, ctx: DecafParser.Expr_arith5Context):
         op1 = ctx.getChild(0).getChild(0)
         op2 = ctx.getChild(2).getChild(0)
@@ -226,9 +283,16 @@ class DecafPrinter(DecafListener):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
         
     def exitLocation(self, ctx: DecafParser.LocationContext):
-        print("Var: ", ctx.getText())
+        # If its a struct property its supposedly saved as 
+        # child0: structID
+        # child1: .
+        # child2: property
+        # child3 is probably a dot, child 4 property, and so on...
         myvar = self.lookupVarInSymbolTable(ctx.getText(), self.currentScope)
-        self.nodeTypes[ctx] = myvar.varType
+        if (myvar != None):
+            self.nodeTypes[ctx] = myvar.varType
+        else:
+            self.nodeTypes[ctx] = 'error'
 
     def exitVarDeclaration(self, ctx: DecafParser.VarDeclarationContext):
         varType = ctx.getChild(0).getText()
@@ -236,6 +300,9 @@ class DecafPrinter(DecafListener):
 
     def exitLiteral(self, ctx: DecafParser.LiteralContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
+
+    def exitStat_assignment(self, ctx: DecafParser.Stat_assignmentContext):
+        return super().exitStat_assignment(ctx)
 
     # -----------------------------------------------------------------------
     # Non override methods
@@ -254,11 +321,18 @@ class DecafPrinter(DecafListener):
     # TODO: Offsets...
     # Symbol Table related methods
     def addScopeToSymbolTable(self, pastScope, methodType=None):
+        canAdd = False
         if self.currentScope not in self.scopeDictionary:
             self.scopeDictionary[self.currentScope] = SymbolTableItem(parentKey=pastScope, returnType=methodType, symbolTable={})
+            canAdd = True
+        else:
+            canAdd = False
+
+        return canAdd
 
     def addVarToSymbolTable(self, varType, varId, varContext, num):
         if (num == None): num = 1
+        canAdd = False
         currentVarSize = self.calculateSize(varType, num)
 
         # Gets the SymbolTable from the current scope
@@ -266,12 +340,12 @@ class DecafPrinter(DecafListener):
 
         if varId not in tempSymbolTable:
             tempSymbolTable[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize)
+            canAdd = True
         else:
-            print("Variable already exists!")
+            canAdd = False
 
         self.scopeDictionary.get(self.currentScope).symbolTable = tempSymbolTable
-
-        #print("Added var: " + varType + " " + varId)
+        return canAdd
 
     # Needs to search this recursively
     # Initial call will be made with currentScope
@@ -304,6 +378,23 @@ class DecafPrinter(DecafListener):
     def updateVarInSymbolTable(self, varId, varValue, scopeName):
         print("updating value")
 
+    def lookupMethodInSymbolTable(self, methodId):
+        scopeObject = self.scopeDictionary.get(methodId)
+        return scopeObject
+
+    def compareParameters(self, methodObj, args, methodCallTypes):
+        symbolTable = methodObj.symbolTable
+        methodDeclarationTypes = []
+
+        # Conseguimos los parametros del método
+        for varId, varItem in symbolTable.items():
+            if varItem.varContext == "param":
+                methodDeclarationTypes.append(varItem.varType)
+
+        if (methodCallTypes == methodDeclarationTypes):
+            return True 
+        else:
+            return False
     #-------------------------------
     # Structs
 
@@ -318,6 +409,7 @@ class DecafPrinter(DecafListener):
 
     def addVarToStruct(self, structId, varType, varId, varContext, num):
         if (num == None): num = 1
+        canAdd = False
         currentVarSize = self.calculateSize(varType, num)
 
         structId = "struct"+structId
@@ -327,11 +419,13 @@ class DecafPrinter(DecafListener):
         if varId not in tempStructMembers:
             tempStructMembers[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize)
             tempStructSize += currentVarSize
+            canAdd = True
         else:
-            print("Variable already exists!")
+            canAdd = False
 
         self.structDictionary.get(structId).structMembers = tempStructMembers
         self.structDictionary.get(structId).size = tempStructSize
+        return canAdd
 
 #---------------------------------------------------------------------------------------------------
 

@@ -71,8 +71,8 @@ statement
 expressionOom: expression |;
 location: (ID|ID '[' expression ']') ('.' location)?;
 expression 
-    : location #expr_loc
-    | methodCall #expr_mcall
+    : methodCall #expr_mcall
+    | location #expr_loc
     | literal #expr_literal
     | '-' expression #expr_minus // Unary Minus Operation
     | '!' expression #expr_not // Unary NOT Operation
@@ -84,12 +84,7 @@ expression
     | expression arith_op_first expression #expr_arith1 // ||
     ;
 
-methodCall: ID '(' arg1 ')';
-// Puede ir algo que coincida con arg2 o nada, en caso de una llamada a metodo sin parametro
-arg1: arg2 |;
-// Expression y luego se utiliza * para permitir 0 o más parametros adicionales
-arg2: (arg)(',' arg)*;
-arg: expression; 
+methodCall: ID '(' (expression (',' expression)?)* ')';
 
 // Operaciones
 // Divididas por nivel de precedencia
@@ -101,6 +96,11 @@ arith_op_fourth: '+' | '-';
 arith_op_third: rel_op | eq_op;
 arith_op_second: '&&';
 arith_op_first: '||';
+
+// <arith_op>→'+'| '-'| '*'| '/'| '%'
+// <rel_op>→'<'| '>'| '<='| '>='
+// <eq_op>→'=='| '!='
+// <cond_op>→'&&'| '||'
 
 literal : int_literal | char_literal | bool_literal ;
 int_literal : NUM ;

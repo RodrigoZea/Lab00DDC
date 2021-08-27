@@ -1,0 +1,25 @@
+class Program
+{
+
+int factorial(int b, int c)
+{
+	int n;
+	int n;
+	n = 1;
+	return n+2;
+}
+
+void main(void)
+{
+	int a;
+	int b;
+	int c;
+	b=0;
+	c=0;
+	a=factorial(b,c);
+	factorial(b,c);
+	return;
+}
+
+
+}

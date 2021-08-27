@@ -287,33 +287,6 @@ class DecafListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by DecafParser#arg1.
-    def enterArg1(self, ctx:DecafParser.Arg1Context):
-        pass
-
-    # Exit a parse tree produced by DecafParser#arg1.
-    def exitArg1(self, ctx:DecafParser.Arg1Context):
-        pass
-
-
-    # Enter a parse tree produced by DecafParser#arg2.
-    def enterArg2(self, ctx:DecafParser.Arg2Context):
-        pass
-
-    # Exit a parse tree produced by DecafParser#arg2.
-    def exitArg2(self, ctx:DecafParser.Arg2Context):
-        pass
-
-
-    # Enter a parse tree produced by DecafParser#arg.
-    def enterArg(self, ctx:DecafParser.ArgContext):
-        pass
-
-    # Exit a parse tree produced by DecafParser#arg.
-    def exitArg(self, ctx:DecafParser.ArgContext):
-        pass
-
-
     # Enter a parse tree produced by DecafParser#rel_op.
     def enterRel_op(self, ctx:DecafParser.Rel_opContext):
         pass
