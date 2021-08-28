@@ -21,7 +21,7 @@ public class DecafParser extends Parser {
 		T__17=18, T__18=19, T__19=20, T__20=21, T__21=22, T__22=23, T__23=24, 
 		T__24=25, T__25=26, T__26=27, T__27=28, T__28=29, T__29=30, T__30=31, 
 		T__31=32, T__32=33, T__33=34, T__34=35, T__35=36, T__36=37, T__37=38, 
-		T__38=39, T__39=40, ID=41, NUM=42, CHAR=43, WS=44, COMMENT=45, LINE_COMMENT=46;
+		ID=39, NUM=40, CHAR=41, WS=42, COMMENT=43, LINE_COMMENT=44;
 	public static final int
 		RULE_program = 0, RULE_declaration = 1, RULE_varDeclaration = 2, RULE_structDeclaration = 3, 
 		RULE_varType = 4, RULE_methodDeclaration = 5, RULE_methodType = 6, RULE_parameter = 7, 
@@ -47,8 +47,8 @@ public class DecafParser extends Parser {
 			null, "'class'", "'Program'", "'{'", "'}'", "';'", "'['", "']'", "'struct'", 
 			"'int'", "'char'", "'boolean'", "'void'", "'('", "','", "')'", "'if'", 
 			"'else'", "'while'", "'return'", "'='", "'.'", "'-'", "'!'", "'<'", "'>'", 
-			"'<='", "'>='", "'=='", "'!='", "'*'", "'/'", "'%'", "'<<'", "'>>'", 
-			"'+'", "'&&'", "'||'", "'''", "'true'", "'false'"
+			"'<='", "'>='", "'=='", "'!='", "'*'", "'/'", "'%'", "'+'", "'&&'", "'||'", 
+			"'''", "'true'", "'false'"
 		};
 	}
 	private static final String[] _LITERAL_NAMES = makeLiteralNames();
@@ -57,7 +57,7 @@ public class DecafParser extends Parser {
 			null, null, null, null, null, null, null, null, null, null, null, null, 
 			null, null, null, null, null, null, null, null, null, null, null, null, 
 			null, null, null, null, null, null, null, null, null, null, null, null, 
-			null, null, null, null, null, "ID", "NUM", "CHAR", "WS", "COMMENT", "LINE_COMMENT"
+			null, null, null, "ID", "NUM", "CHAR", "WS", "COMMENT", "LINE_COMMENT"
 		};
 	}
 	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
@@ -683,7 +683,7 @@ public class DecafParser extends Parser {
 			setState(147);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__4) | (1L << T__12) | (1L << T__15) | (1L << T__17) | (1L << T__18) | (1L << T__21) | (1L << T__22) | (1L << T__37) | (1L << T__38) | (1L << T__39) | (1L << ID) | (1L << NUM))) != 0)) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__4) | (1L << T__12) | (1L << T__15) | (1L << T__17) | (1L << T__18) | (1L << T__21) | (1L << T__22) | (1L << T__35) | (1L << T__36) | (1L << T__37) | (1L << ID) | (1L << NUM))) != 0)) {
 				{
 				{
 				setState(144);
@@ -876,7 +876,7 @@ public class DecafParser extends Parser {
 				setState(180);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__12) | (1L << T__21) | (1L << T__22) | (1L << T__37) | (1L << T__38) | (1L << T__39) | (1L << ID) | (1L << NUM))) != 0)) {
+				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__12) | (1L << T__21) | (1L << T__22) | (1L << T__35) | (1L << T__36) | (1L << T__37) | (1L << ID) | (1L << NUM))) != 0)) {
 					{
 					setState(179);
 					expression(0);
@@ -920,9 +920,9 @@ public class DecafParser extends Parser {
 			case T__12:
 			case T__21:
 			case T__22:
+			case T__35:
+			case T__36:
 			case T__37:
-			case T__38:
-			case T__39:
 			case ID:
 			case NUM:
 				enterOuterAlt(_localctx, 1);
@@ -1328,7 +1328,7 @@ public class DecafParser extends Parser {
 			setState(249);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__12) | (1L << T__21) | (1L << T__22) | (1L << T__37) | (1L << T__38) | (1L << T__39) | (1L << ID) | (1L << NUM))) != 0)) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__12) | (1L << T__21) | (1L << T__22) | (1L << T__35) | (1L << T__36) | (1L << T__37) | (1L << ID) | (1L << NUM))) != 0)) {
 				{
 				{
 				setState(242);
@@ -1456,7 +1456,7 @@ public class DecafParser extends Parser {
 			{
 			setState(258);
 			_la = _input.LA(1);
-			if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__29) | (1L << T__30) | (1L << T__31) | (1L << T__32) | (1L << T__33))) != 0)) ) {
+			if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__29) | (1L << T__30) | (1L << T__31))) != 0)) ) {
 			_errHandler.recoverInline(this);
 			}
 			else {
@@ -1493,7 +1493,7 @@ public class DecafParser extends Parser {
 			{
 			setState(260);
 			_la = _input.LA(1);
-			if ( !(_la==T__21 || _la==T__34) ) {
+			if ( !(_la==T__21 || _la==T__32) ) {
 			_errHandler.recoverInline(this);
 			}
 			else {
@@ -1581,7 +1581,7 @@ public class DecafParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(266);
-			match(T__35);
+			match(T__33);
 			}
 		}
 		catch (RecognitionException re) {
@@ -1609,7 +1609,7 @@ public class DecafParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(268);
-			match(T__36);
+			match(T__34);
 			}
 		}
 		catch (RecognitionException re) {
@@ -1653,15 +1653,15 @@ public class DecafParser extends Parser {
 				int_literal();
 				}
 				break;
-			case T__37:
+			case T__35:
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(271);
 				char_literal();
 				}
 				break;
-			case T__38:
-			case T__39:
+			case T__36:
+			case T__37:
 				enterOuterAlt(_localctx, 3);
 				{
 				setState(272);
@@ -1727,11 +1727,11 @@ public class DecafParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(277);
-			match(T__37);
+			match(T__35);
 			setState(278);
 			match(CHAR);
 			setState(279);
-			match(T__37);
+			match(T__35);
 			}
 		}
 		catch (RecognitionException re) {
@@ -1761,7 +1761,7 @@ public class DecafParser extends Parser {
 			{
 			setState(281);
 			_la = _input.LA(1);
-			if ( !(_la==T__38 || _la==T__39) ) {
+			if ( !(_la==T__36 || _la==T__37) ) {
 			_errHandler.recoverInline(this);
 			}
 			else {
@@ -1806,9 +1806,9 @@ public class DecafParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3\60\u011e\4\2\t\2"+
-		"\4\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13"+
-		"\t\13\4\f\t\f\4\r\t\r\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22"+
+		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3.\u011e\4\2\t\2\4"+
+		"\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t"+
+		"\13\4\f\t\f\4\r\t\r\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22"+
 		"\4\23\t\23\4\24\t\24\4\25\t\25\4\26\t\26\4\27\t\27\4\30\t\30\4\31\t\31"+
 		"\4\32\t\32\4\33\t\33\3\2\3\2\3\2\3\2\7\2;\n\2\f\2\16\2>\13\2\3\2\3\2\3"+
 		"\3\3\3\3\3\5\3E\n\3\3\4\3\4\3\4\3\4\3\4\3\4\3\4\3\4\3\4\3\4\3\4\5\4R\n"+
@@ -1828,27 +1828,27 @@ public class DecafParser extends Parser {
 		"\3\21\3\22\3\22\3\23\3\23\3\24\3\24\3\25\3\25\5\25\u010b\n\25\3\26\3\26"+
 		"\3\27\3\27\3\30\3\30\3\30\5\30\u0114\n\30\3\31\3\31\3\32\3\32\3\32\3\32"+
 		"\3\33\3\33\3\33\2\3\34\34\2\4\6\b\n\f\16\20\22\24\26\30\32\34\36 \"$&"+
-		"(*,.\60\62\64\2\t\3\2\13\16\3\2\13\r\3\2\32\35\3\2\36\37\3\2 $\4\2\30"+
-		"\30%%\3\2)*\2\u012e\2\66\3\2\2\2\4D\3\2\2\2\6Q\3\2\2\2\bS\3\2\2\2\ng\3"+
-		"\2\2\2\fi\3\2\2\2\16|\3\2\2\2\20\u0087\3\2\2\2\22\u0089\3\2\2\2\24\u008b"+
+		"(*,.\60\62\64\2\t\3\2\13\16\3\2\13\r\3\2\32\35\3\2\36\37\3\2 \"\4\2\30"+
+		"\30##\3\2\'(\2\u012e\2\66\3\2\2\2\4D\3\2\2\2\6Q\3\2\2\2\bS\3\2\2\2\ng"+
+		"\3\2\2\2\fi\3\2\2\2\16|\3\2\2\2\20\u0087\3\2\2\2\22\u0089\3\2\2\2\24\u008b"+
 		"\3\2\2\2\26\u00b9\3\2\2\2\30\u00bd\3\2\2\2\32\u00c5\3\2\2\2\34\u00d7\3"+
 		"\2\2\2\36\u00f2\3\2\2\2 \u0100\3\2\2\2\"\u0102\3\2\2\2$\u0104\3\2\2\2"+
 		"&\u0106\3\2\2\2(\u010a\3\2\2\2*\u010c\3\2\2\2,\u010e\3\2\2\2.\u0113\3"+
 		"\2\2\2\60\u0115\3\2\2\2\62\u0117\3\2\2\2\64\u011b\3\2\2\2\66\67\7\3\2"+
 		"\2\678\7\4\2\28<\7\5\2\29;\5\4\3\2:9\3\2\2\2;>\3\2\2\2<:\3\2\2\2<=\3\2"+
 		"\2\2=?\3\2\2\2><\3\2\2\2?@\7\6\2\2@\3\3\2\2\2AE\5\b\5\2BE\5\6\4\2CE\5"+
-		"\f\7\2DA\3\2\2\2DB\3\2\2\2DC\3\2\2\2E\5\3\2\2\2FG\5\n\6\2GH\7+\2\2HI\7"+
-		"\7\2\2IR\3\2\2\2JK\5\n\6\2KL\7+\2\2LM\7\b\2\2MN\7,\2\2NO\7\t\2\2OP\7\7"+
-		"\2\2PR\3\2\2\2QF\3\2\2\2QJ\3\2\2\2R\7\3\2\2\2ST\7\n\2\2TU\7+\2\2UY\7\5"+
+		"\f\7\2DA\3\2\2\2DB\3\2\2\2DC\3\2\2\2E\5\3\2\2\2FG\5\n\6\2GH\7)\2\2HI\7"+
+		"\7\2\2IR\3\2\2\2JK\5\n\6\2KL\7)\2\2LM\7\b\2\2MN\7*\2\2NO\7\t\2\2OP\7\7"+
+		"\2\2PR\3\2\2\2QF\3\2\2\2QJ\3\2\2\2R\7\3\2\2\2ST\7\n\2\2TU\7)\2\2UY\7\5"+
 		"\2\2VX\5\6\4\2WV\3\2\2\2X[\3\2\2\2YW\3\2\2\2YZ\3\2\2\2Z\\\3\2\2\2[Y\3"+
 		"\2\2\2\\^\7\6\2\2]_\7\7\2\2^]\3\2\2\2^_\3\2\2\2_\t\3\2\2\2`h\7\13\2\2"+
-		"ah\7\f\2\2bh\7\r\2\2cd\7\n\2\2dh\7+\2\2eh\5\b\5\2fh\7\16\2\2g`\3\2\2\2"+
+		"ah\7\f\2\2bh\7\r\2\2cd\7\n\2\2dh\7)\2\2eh\5\b\5\2fh\7\16\2\2g`\3\2\2\2"+
 		"ga\3\2\2\2gb\3\2\2\2gc\3\2\2\2ge\3\2\2\2gf\3\2\2\2h\13\3\2\2\2ij\5\16"+
-		"\b\2jk\7+\2\2kv\7\17\2\2lq\5\20\t\2mn\7\20\2\2np\5\20\t\2om\3\2\2\2ps"+
+		"\b\2jk\7)\2\2kv\7\17\2\2lq\5\20\t\2mn\7\20\2\2np\5\20\t\2om\3\2\2\2ps"+
 		"\3\2\2\2qo\3\2\2\2qr\3\2\2\2ru\3\2\2\2sq\3\2\2\2tl\3\2\2\2ux\3\2\2\2v"+
 		"t\3\2\2\2vw\3\2\2\2wy\3\2\2\2xv\3\2\2\2yz\7\21\2\2z{\5\24\13\2{\r\3\2"+
-		"\2\2|}\t\2\2\2}\17\3\2\2\2~\177\5\22\n\2\177\u0080\7+\2\2\u0080\u0088"+
-		"\3\2\2\2\u0081\u0082\5\22\n\2\u0082\u0083\7+\2\2\u0083\u0084\7\b\2\2\u0084"+
+		"\2\2|}\t\2\2\2}\17\3\2\2\2~\177\5\22\n\2\177\u0080\7)\2\2\u0080\u0088"+
+		"\3\2\2\2\u0081\u0082\5\22\n\2\u0082\u0083\7)\2\2\u0083\u0084\7\b\2\2\u0084"+
 		"\u0085\7\t\2\2\u0085\u0088\3\2\2\2\u0086\u0088\7\16\2\2\u0087~\3\2\2\2"+
 		"\u0087\u0081\3\2\2\2\u0087\u0086\3\2\2\2\u0088\21\3\2\2\2\u0089\u008a"+
 		"\t\3\2\2\u008a\23\3\2\2\2\u008b\u008f\7\5\2\2\u008c\u008e\5\6\4\2\u008d"+
@@ -1869,7 +1869,7 @@ public class DecafParser extends Parser {
 		"\3\2\2\2\u00b9\u00a3\3\2\2\2\u00b9\u00a9\3\2\2\2\u00b9\u00ad\3\2\2\2\u00b9"+
 		"\u00b0\3\2\2\2\u00b9\u00b1\3\2\2\2\u00b9\u00b6\3\2\2\2\u00ba\27\3\2\2"+
 		"\2\u00bb\u00be\5\34\17\2\u00bc\u00be\3\2\2\2\u00bd\u00bb\3\2\2\2\u00bd"+
-		"\u00bc\3\2\2\2\u00be\31\3\2\2\2\u00bf\u00c6\7+\2\2\u00c0\u00c1\7+\2\2"+
+		"\u00bc\3\2\2\2\u00be\31\3\2\2\2\u00bf\u00c6\7)\2\2\u00c0\u00c1\7)\2\2"+
 		"\u00c1\u00c2\7\b\2\2\u00c2\u00c3\5\34\17\2\u00c3\u00c4\7\t\2\2\u00c4\u00c6"+
 		"\3\2\2\2\u00c5\u00bf\3\2\2\2\u00c5\u00c0\3\2\2\2\u00c6\u00c9\3\2\2\2\u00c7"+
 		"\u00c8\7\27\2\2\u00c8\u00ca\5\32\16\2\u00c9\u00c7\3\2\2\2\u00c9\u00ca"+
@@ -1887,7 +1887,7 @@ public class DecafParser extends Parser {
 		",\27\2\u00eb\u00ec\5\34\17\4\u00ec\u00ee\3\2\2\2\u00ed\u00d9\3\2\2\2\u00ed"+
 		"\u00dd\3\2\2\2\u00ed\u00e1\3\2\2\2\u00ed\u00e5\3\2\2\2\u00ed\u00e9\3\2"+
 		"\2\2\u00ee\u00f1\3\2\2\2\u00ef\u00ed\3\2\2\2\u00ef\u00f0\3\2\2\2\u00f0"+
-		"\35\3\2\2\2\u00f1\u00ef\3\2\2\2\u00f2\u00f3\7+\2\2\u00f3\u00fb\7\17\2"+
+		"\35\3\2\2\2\u00f1\u00ef\3\2\2\2\u00f2\u00f3\7)\2\2\u00f3\u00fb\7\17\2"+
 		"\2\u00f4\u00f7\5\34\17\2\u00f5\u00f6\7\20\2\2\u00f6\u00f8\5\34\17\2\u00f7"+
 		"\u00f5\3\2\2\2\u00f7\u00f8\3\2\2\2\u00f8\u00fa\3\2\2\2\u00f9\u00f4\3\2"+
 		"\2\2\u00fa\u00fd\3\2\2\2\u00fb\u00f9\3\2\2\2\u00fb\u00fc\3\2\2\2\u00fc"+
@@ -1895,11 +1895,11 @@ public class DecafParser extends Parser {
 		"\2\u0100\u0101\t\4\2\2\u0101!\3\2\2\2\u0102\u0103\t\5\2\2\u0103#\3\2\2"+
 		"\2\u0104\u0105\t\6\2\2\u0105%\3\2\2\2\u0106\u0107\t\7\2\2\u0107\'\3\2"+
 		"\2\2\u0108\u010b\5 \21\2\u0109\u010b\5\"\22\2\u010a\u0108\3\2\2\2\u010a"+
-		"\u0109\3\2\2\2\u010b)\3\2\2\2\u010c\u010d\7&\2\2\u010d+\3\2\2\2\u010e"+
-		"\u010f\7\'\2\2\u010f-\3\2\2\2\u0110\u0114\5\60\31\2\u0111\u0114\5\62\32"+
+		"\u0109\3\2\2\2\u010b)\3\2\2\2\u010c\u010d\7$\2\2\u010d+\3\2\2\2\u010e"+
+		"\u010f\7%\2\2\u010f-\3\2\2\2\u0110\u0114\5\60\31\2\u0111\u0114\5\62\32"+
 		"\2\u0112\u0114\5\64\33\2\u0113\u0110\3\2\2\2\u0113\u0111\3\2\2\2\u0113"+
-		"\u0112\3\2\2\2\u0114/\3\2\2\2\u0115\u0116\7,\2\2\u0116\61\3\2\2\2\u0117"+
-		"\u0118\7(\2\2\u0118\u0119\7-\2\2\u0119\u011a\7(\2\2\u011a\63\3\2\2\2\u011b"+
+		"\u0112\3\2\2\2\u0114/\3\2\2\2\u0115\u0116\7*\2\2\u0116\61\3\2\2\2\u0117"+
+		"\u0118\7&\2\2\u0118\u0119\7+\2\2\u0119\u011a\7&\2\2\u011a\63\3\2\2\2\u011b"+
 		"\u011c\t\b\2\2\u011c\65\3\2\2\2\32<DQY^gqv\u0087\u008f\u0095\u00a1\u00b6"+
 		"\u00b9\u00bd\u00c5\u00c9\u00d7\u00ed\u00ef\u00f7\u00fb\u010a\u0113";
 	public static final ATN _ATN =

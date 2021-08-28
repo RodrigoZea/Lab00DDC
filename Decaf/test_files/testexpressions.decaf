@@ -4,7 +4,6 @@ class Program
 int factorial(int b, int c)
 {
 	int n;
-	int n;
 	n = 1;
 	return n+2;
 }

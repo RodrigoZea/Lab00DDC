@@ -77,7 +77,7 @@ expression
     | '-' expression #expr_minus // Unary Minus Operation
     | '!' expression #expr_not // Unary NOT Operation
     | '('expression')' #expr_parenthesis
-    | expression arith_op_fifth expression #expr_arith5 // * / % << >>
+    | expression arith_op_fifth expression #expr_arith5 // * / %
     | expression arith_op_fourth expression #expr_arith4 // + -
     | expression arith_op_third expression #expr_arith3 // == != < <= > >=
     | expression arith_op_second expression #expr_arith2 // &&
@@ -89,9 +89,9 @@ methodCall: ID '(' (expression (',' expression)?)* ')';
 // Operaciones
 // Divididas por nivel de precedencia
 // Especificación de precedencia: https://anoopsarkar.github.io/compilers-class/decafspec.html
-rel_op : '<' | '>' | '<=' | '>=' ;
+rel_op : '<' | '>' | '<=' | '>=';
 eq_op : '==' | '!=' ;
-arith_op_fifth: '*' | '/' | '%' | '<<' | '>>';
+arith_op_fifth: '*' | '/' | '%';
 arith_op_fourth: '+' | '-';
 arith_op_third: rel_op | eq_op;
 arith_op_second: '&&';

@@ -51,7 +51,6 @@ class DecafPrinter(DecafListener):
         self.errorList = []
         self.primitives = ('int', 'char', 'boolean', 'struct', 'void')
         self.typeSizes = {'int':4, 'char':1, 'boolean':1}
-        self.boolValues = ('true', 'false')
         self.nodeTypes = {}
         self.mainFound = False
 
@@ -73,42 +72,40 @@ class DecafPrinter(DecafListener):
     # -----------------------------------------------------------------------
     # Listener override methods
     def enterVarDeclaration(self, ctx: DecafParser.VarDeclarationContext):
-        try:
-                value = None
-                if (ctx.NUM() != None):
-                    value = ctx.getChild(3).getText()
-                    # Won't be added to symbol table!
-                    if (int(value) <= 0):
-                        raise ArraySizeError
+        value = None
+        if (ctx.NUM() != None):
+            value = ctx.getChild(3).getText()
 
-                parentCtx = ctx.parentCtx
-                firstChild = parentCtx.getChild(0).getText()
+            if (int(value) <= 0):
+                self.nodeTypes[ctx] = 'error'
+                self.addError(ctx.start.line, "Array size must be bigger than 0")
+                #return
 
-                varType = ctx.getChild(0).getText()
-                varId = ctx.getChild(1).getText()
+        parentCtx = ctx.parentCtx
+        firstChild = parentCtx.getChild(0).getText()
 
-                if firstChild == "struct":
-                    structId = parentCtx.getChild(1).getText()
-                    added = self.addVarToStruct(structId, varType, varId, "blockVar", value)
+        varType = ctx.getChild(0).getText()
+        varId = ctx.getChild(1).getText()
 
-                    if (added):
-                        self.nodeTypes[ctx] = 'void'
-                    else:
-                        # TODO: Add error
-                        self.nodeTypes[ctx] = 'error'
-                else:
-                    added = self.addVarToSymbolTable(varType, varId, "blockVar", value)
+        if firstChild == "struct":
+            structId = parentCtx.getChild(1).getText()
+            added = self.addVarToStruct(structId, varType, varId, "blockVar", value)
 
-                    if (added):
-                        self.nodeTypes[ctx] = 'void'
-                    else:
-                        # TODO: Add error
-                        self.nodeTypes[ctx] = 'error'
+            if (added):
+                self.nodeTypes[ctx] = 'void'
+            else:
+                self.nodeTypes[ctx] = 'error'
+                self.addError(ctx.start.line, "Failed to add variable to struct, variable already exists.")
+        else:
+            added = self.addVarToSymbolTable(varType, varId, "blockVar", value)
 
-        except ArraySizeError:
-            #print("ArraySizeError at line %d: Array size must be bigger than 0" % ctx.start.line)
-            a = 0
+            if (added):
+                self.nodeTypes[ctx] = 'void'
+            else:
+                self.nodeTypes[ctx] = 'error'
+                self.addError(ctx.start.line, "Failed to add variable to scope, variable already exists.")
 
+ 
     def enterMethodDeclaration(self, ctx: DecafParser.MethodDeclarationContext):
         methodType = ctx.getChild(0).getText()
         methodName = ctx.getChild(1).getText()
@@ -122,8 +119,8 @@ class DecafPrinter(DecafListener):
         if (added):
             self.nodeTypes[ctx] = 'void'
         else:
-            # TODO: Add error
             self.nodeTypes[ctx] = 'error'
+            self.addError(ctx.start.line, "Failed to add method to symbol table, there's already a method with that name.")
 
     def enterBlock(self, ctx: DecafParser.BlockContext):
         parentCtx = ctx.parentCtx
@@ -141,8 +138,8 @@ class DecafPrinter(DecafListener):
         if (added):
             self.nodeTypes[ctx] = 'void'
         else:
-            # TODO: Add error
             self.nodeTypes[ctx] = 'error'
+            self.addError(ctx.start.line, "Failed to add block to symbol table.")
 
     def enterParameter(self, ctx: DecafParser.ParameterContext):
         paramType = ctx.getChild(0).getText()
@@ -156,6 +153,7 @@ class DecafPrinter(DecafListener):
             else:
                 # TODO: Add error
                 self.nodeTypes[ctx] = 'error'
+                self.addError(ctx.start.line, "Failed to add parameter to symbol table, there's already an existing parameter with that name.")
 
     def enterStructDeclaration(self, ctx: DecafParser.StructDeclarationContext):
         structId = ctx.getChild(1).getText()
@@ -189,63 +187,60 @@ class DecafPrinter(DecafListener):
             paramsEquality = self.compareParameters(methodObj, args, methodCallTypes)
 
             if paramsEquality:
-                self.nodeTypes[ctx] = 'void'
+                self.nodeTypes[ctx] = methodObj.returnType
             else:
-                # TODO: ADD ERROR
                 self.nodeTypes[ctx] = 'error'
+                self.addError(ctx.start.line, "Failed to call method, parameters don't match (either in type or order is incorrect)")
         else:
-            # TODO: ADD ERROR
-            print("Method doesn't exist in symbol table or hasn't been declared yet.")
+            self.nodeTypes[ctx] = 'error'
+            self.addError(ctx.start.line, "Method doesn't exist in symbol table or hasn't been declared yet.")
         
     def exitProgram(self, ctx: DecafParser.ProgramContext):
         if (not self.mainFound):
             self.nodeTypes[ctx] = 'error'
+            self.addError(ctx.start.line, "Main method is not declared!")
 
     def exitStat_return(self, ctx: DecafParser.StatementContext):
-        try:
-            # Children structure
-            # 0: Return
-            # 1: Value
-            # 2: ;
-            # Everything related to returns
-            if ctx.getChild(0).getText() == "return":
-                # Block context
-                blockContext = ctx.parentCtx
+        # Children structure
+        # 0: Return
+        # 1: Value
+        # 2: ;
+        # Everything related to returns
+        if ctx.getChild(0).getText() == "return":
+            # Block context
+            blockContext = ctx.parentCtx
 
-                methodDeclarationCtx = blockContext.parentCtx
-                methodType = methodDeclarationCtx.getChild(0).getText()
-                expressionOom = ctx.getChild(1)
+            methodDeclarationCtx = blockContext.parentCtx
+            methodType = methodDeclarationCtx.getChild(0).getText()
+            expressionOom = ctx.getChild(1)
 
-                if expressionOom.getText() != ";":
-                    if methodType in self.primitives:
-                        if expressionOom.getText() == '':
-                            raise ReturnEmpty
-                    elif methodType == "void":
-                        if expressionOom.getText() != '':
-                            raise ReturnNotEmpty
-
+            if (ctx.getChild(1).getText() == ""):
+                if (methodType == 'void'):
+                    self.nodeTypes[ctx] = 'void'
+                elif(methodType in self.primitives):
+                    self.nodeTypes[ctx] = 'error'
+                    self.addError(ctx.start.line, "Typed method expecting a return value.")
+                else:
+                    self.nodeTypes[ctx] = 'error' 
+                    self.addError(ctx.start.line, "Method type is not accepted by language.")     
+            else:
+                if (methodType in self.primitives):
                     exprType = self.nodeTypes[expressionOom.getChild(0)]
-                    print(exprType)
 
                     if (exprType == methodType):
-                        print("same return type!! WOOO")
+                        self.nodeTypes[ctx] = 'void'
+                        print("same type")
+                    else:
+                        self.nodeTypes[ctx] = 'error'
+                        self.addError(ctx.start.line, "Return statement type doesn't match with method type.")
+                else:
+                    self.nodeTypes[ctx] = 'error' 
+                    self.addError(ctx.start.line, "Method type is not accepted by language.")                      
 
-            return super().exitStat_return(ctx)
-
-        except ReturnMissing:
-            #print("Expected return statement on method")
-            a = 0
-        except ReturnEmpty:
-            #print("Missing return value on non-void method")
-            a = 0
-        except ReturnNotEmpty:
-            #print("Void type method should have an empty return")
-            a = 0
 
     # TODO: Agregar diferentes operadores
     # NOTE: Se debe de saltar un nodo siempre porque no se está tomando en cuenta el expression padre, se debe obtener el t ipo de los literals.
-    # TODO: Agregar errores
-    # // * / % << >>
+    # * / % << >>
     def exitExpr_arith5(self, ctx: DecafParser.Expr_arith5Context):
         op1 = ctx.getChild(0).getChild(0)
         op2 = ctx.getChild(2).getChild(0)
@@ -257,7 +252,8 @@ class DecafPrinter(DecafListener):
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
-    # // + -
+            self.addError(ctx.start.line, "Operation expected two integer typed operators.")     
+    # + -
     def exitExpr_arith4(self, ctx: DecafParser.Expr_arith5Context):
         op1 = ctx.getChild(0).getChild(0)
         op2 = ctx.getChild(2).getChild(0)
@@ -269,6 +265,84 @@ class DecafPrinter(DecafListener):
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
+            self.addError(ctx.start.line, "Operation expected two integer typed operators.")    
+
+    # eq_op: == != | rel_op: < <= > >=
+    def exitExpr_arith3(self, ctx: DecafParser.Expr_arith3Context):
+        op1 = ctx.getChild(0).getChild(0)
+        op2 = ctx.getChild(2).getChild(0)
+        symbol = ctx.getChild(1).getText()
+
+        if (symbol == '<' or symbol == '<=' or symbol == '>' or symbol == '>='):
+            if(self.nodeTypes[op1] == 'int' and self.nodeTypes[op2] == 'int'):
+                # Validar el tipo de expression (operador) expression, ver si ambos son int
+                # Una vez se validó, lo podemos agregar a nuestro diccionario
+                self.nodeTypes[ctx] = 'bool'
+            else:
+                # Si no pues es un error.
+                self.nodeTypes[ctx] = 'error'
+                self.addError(ctx.start.line, "Operation expected two integer typed operators.")    
+        elif (symbol == "==" or symbol == "!="):
+            allowed = ('int', 'char', 'bool')
+            type1 = self.nodeTypes[op1] 
+            type2 = self.nodeTypes[op2]
+
+            # Chequear tipos permitidos
+            if (type1 in allowed and type2 in allowed):
+                if(self.nodeTypes[op1] == self.nodeTypes[op2]):
+                    # Una vez se validó, lo podemos agregar a nuestro diccionario
+                    self.nodeTypes[ctx] = 'bool'
+                else:
+                    # Si no pues es un error.
+                    self.nodeTypes[ctx] = 'error'
+                    self.addError(ctx.start.line, "Operation expected two operators with the same type.")    
+            # Si no está entre los permitidos, es error
+            else:
+                self.nodeTypes[ctx] = 'error'
+                self.addError(ctx.start.line, "One of the operators has a type not accepted by the language.")    
+
+    # &&
+    def exitArith_op_second(self, ctx: DecafParser.Arith_op_secondContext):
+        op1 = ctx.getChild(0).getChild(0)
+        op2 = ctx.getChild(2).getChild(0)
+
+        if(self.nodeTypes[op1] == 'bool' and self.nodeTypes[op2] == 'bool'):
+            # Validar el tipo de expression (operador) expression, ver si ambos son int
+            # Una vez se validó, lo podemos agregar a nuestro diccionario
+            self.nodeTypes[ctx] = 'bool'
+        else:
+            # Si no pues es un error.
+            self.nodeTypes[ctx] = 'error'
+            self.addError(ctx.start.line, "Operation expected two bool typed operators.")    
+
+    # ||
+    def exitArith_op_first(self, ctx: DecafParser.Arith_op_firstContext):
+        op1 = ctx.getChild(0).getChild(0)
+        op2 = ctx.getChild(2).getChild(0)
+
+        if(self.nodeTypes[op1] == 'bool' and self.nodeTypes[op2] == 'bool'):
+            # Validar el tipo de expression (operador) expression, ver si ambos son int
+            # Una vez se validó, lo podemos agregar a nuestro diccionario
+            self.nodeTypes[ctx] = 'bool'
+        else:
+            # Si no pues es un error.
+            self.nodeTypes[ctx] = 'error'
+            self.addError(ctx.start.line, "Operation expected two bool typed operators.")   
+
+    # !
+    def exitExpr_not(self, ctx: DecafParser.Expr_notContext):
+        op1 = ctx.getChild(1).getChild(0)
+
+        if(self.nodeTypes[op1] == 'bool'):
+            # Validar el tipo de expression (operador) expression, ver si ambos son int
+            # Una vez se validó, lo podemos agregar a nuestro diccionario
+            self.nodeTypes[ctx] = 'bool'
+        else:
+            # Si no pues es un error.
+            self.nodeTypes[ctx] = 'error'
+            self.addError(ctx.start.line, "Operation expected a bool typed operator.")   
+
+    # TODO: Revisar paréntesis?
         
     def exitInt_literal(self, ctx: DecafParser.Int_literalContext):
         self.nodeTypes[ctx] = 'int'
@@ -293,6 +367,7 @@ class DecafPrinter(DecafListener):
             self.nodeTypes[ctx] = myvar.varType
         else:
             self.nodeTypes[ctx] = 'error'
+            self.addError(ctx.start.line, "Variable hasn't been defined yet.")   
 
     def exitVarDeclaration(self, ctx: DecafParser.VarDeclarationContext):
         varType = ctx.getChild(0).getText()
@@ -301,8 +376,46 @@ class DecafPrinter(DecafListener):
     def exitLiteral(self, ctx: DecafParser.LiteralContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
 
+    def exitExpr_literal(self, ctx: DecafParser.Expr_literalContext):
+        self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
+
+    def exitExpr_mcall(self, ctx: DecafParser.Expr_mcallContext):
+        self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
+
     def exitStat_assignment(self, ctx: DecafParser.Stat_assignmentContext):
-        return super().exitStat_assignment(ctx)
+        op1 = ctx.getChild(0)
+        op2 = ctx.getChild(2)
+
+        if(self.nodeTypes[op1] == self.nodeTypes[op2]):
+            # Validar el tipo de expression (operador) expression, ver si ambos son int
+            # Una vez se validó, lo podemos agregar a nuestro diccionario
+            self.nodeTypes[ctx] = self.nodeTypes[op1]
+        else:
+            # Si no pues es un error.
+            self.nodeTypes[ctx] = 'error'
+            self.addError(ctx.start.line, "Assigment should be of the same type on its operands.")   
+
+    def exitStat_if(self, ctx: DecafParser.Stat_ifContext):
+        expression = ctx.getChild(2)
+
+        if(self.nodeTypes[expression] == 'bool'):
+            self.nodeTypes[ctx] = 'bool'
+        else:
+            # Si no pues es un error.
+            self.nodeTypes[ctx] = 'error'
+            self.addError(ctx.start.line, "if statement should be a boolean expression.")         
+
+
+    # This should be exitStat_while but it was tagged incorrectly in the grammar.
+    def exitStat_else(self, ctx: DecafParser.Stat_elseContext):
+        expression = ctx.getChild(2)
+
+        if(self.nodeTypes[expression] == 'bool'):
+            self.nodeTypes[ctx] = 'bool'
+        else:
+            # Si no pues es un error.
+            self.nodeTypes[ctx] = 'error'
+            self.addError(ctx.start.line, "while statement should be a boolean expression.")     
 
     # -----------------------------------------------------------------------
     # Non override methods
@@ -316,6 +429,10 @@ class DecafPrinter(DecafListener):
             return self.typeSizes[varType]*num
         elif (varType in self.structDictionary):
             return self.structDictionary[varType].size*num
+
+    def addError(self, line, body):
+        errorMsg = "Error at line ( " + str(line) + " ): " + body
+        self.errorList.append(errorMsg)
   
     # -----------------------------------------------------------------------
     # TODO: Offsets...
@@ -456,6 +573,8 @@ def main(argv):
         for var, varItem in v.structMembers.items():
             print("         VarId: " + var + ", VarType: " + varItem.varType + ", Num: " + str(varItem.num) + ", Size: " + str(varItem.size))
     """
+    for error in printer.errorList:
+        print(error)
     #traverse(tree, parser.ruleNames)
 
 def traverse(tree, rule_names, indent = 0):
