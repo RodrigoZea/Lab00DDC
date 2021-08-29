@@ -51,6 +51,7 @@ class DecafPrinter(DecafListener):
         self.errorList = []
         self.primitives = ('int', 'char', 'boolean', 'struct', 'void')
         self.typeSizes = {'int':4, 'char':1, 'boolean':1}
+        self.startingValues = {'int': '0', 'boolean': 'false', 'char': 'a'}
         self.nodeTypes = {}
         self.mainFound = False
 
@@ -79,7 +80,7 @@ class DecafPrinter(DecafListener):
             if (int(value) <= 0):
                 self.nodeTypes[ctx] = 'error'
                 self.addError(ctx.start.line, "Array size must be bigger than 0")
-                #return
+                return
 
         parentCtx = ctx.parentCtx
         firstChild = parentCtx.getChild(0).getText()
@@ -135,11 +136,9 @@ class DecafPrinter(DecafListener):
         # Add to symbol table!
         added = self.addScopeToSymbolTable(self.pastScope)
 
+        # TODO: Check weird error with not adding scope
         if (added):
             self.nodeTypes[ctx] = 'void'
-        else:
-            self.nodeTypes[ctx] = 'error'
-            self.addError(ctx.start.line, "Failed to add block to symbol table.")
 
     def enterParameter(self, ctx: DecafParser.ParameterContext):
         paramType = ctx.getChild(0).getText()
@@ -237,8 +236,6 @@ class DecafPrinter(DecafListener):
                     self.nodeTypes[ctx] = 'error' 
                     self.addError(ctx.start.line, "Method type is not accepted by language.")                      
 
-
-    # TODO: Agregar diferentes operadores
     # NOTE: Se debe de saltar un nodo siempre porque no se está tomando en cuenta el expression padre, se debe obtener el t ipo de los literals.
     # * / % << >>
     def exitExpr_arith5(self, ctx: DecafParser.Expr_arith5Context):
@@ -277,13 +274,13 @@ class DecafPrinter(DecafListener):
             if(self.nodeTypes[op1] == 'int' and self.nodeTypes[op2] == 'int'):
                 # Validar el tipo de expression (operador) expression, ver si ambos son int
                 # Una vez se validó, lo podemos agregar a nuestro diccionario
-                self.nodeTypes[ctx] = 'bool'
+                self.nodeTypes[ctx] = 'boolean'
             else:
                 # Si no pues es un error.
                 self.nodeTypes[ctx] = 'error'
                 self.addError(ctx.start.line, "Operation expected two integer typed operators.")    
         elif (symbol == "==" or symbol == "!="):
-            allowed = ('int', 'char', 'bool')
+            allowed = ('int', 'char', 'boolean')
             type1 = self.nodeTypes[op1] 
             type2 = self.nodeTypes[op2]
 
@@ -291,7 +288,7 @@ class DecafPrinter(DecafListener):
             if (type1 in allowed and type2 in allowed):
                 if(self.nodeTypes[op1] == self.nodeTypes[op2]):
                     # Una vez se validó, lo podemos agregar a nuestro diccionario
-                    self.nodeTypes[ctx] = 'bool'
+                    self.nodeTypes[ctx] = 'boolean'
                 else:
                     # Si no pues es un error.
                     self.nodeTypes[ctx] = 'error'
@@ -306,41 +303,41 @@ class DecafPrinter(DecafListener):
         op1 = ctx.getChild(0).getChild(0)
         op2 = ctx.getChild(2).getChild(0)
 
-        if(self.nodeTypes[op1] == 'bool' and self.nodeTypes[op2] == 'bool'):
+        if(self.nodeTypes[op1] == 'boolean' and self.nodeTypes[op2] == 'boolean'):
             # Validar el tipo de expression (operador) expression, ver si ambos son int
             # Una vez se validó, lo podemos agregar a nuestro diccionario
-            self.nodeTypes[ctx] = 'bool'
+            self.nodeTypes[ctx] = 'boolean'
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
-            self.addError(ctx.start.line, "Operation expected two bool typed operators.")    
+            self.addError(ctx.start.line, "Operation expected two boolean typed operators.")    
 
     # ||
     def exitArith_op_first(self, ctx: DecafParser.Arith_op_firstContext):
         op1 = ctx.getChild(0).getChild(0)
         op2 = ctx.getChild(2).getChild(0)
 
-        if(self.nodeTypes[op1] == 'bool' and self.nodeTypes[op2] == 'bool'):
+        if(self.nodeTypes[op1] == 'boolean' and self.nodeTypes[op2] == 'boolean'):
             # Validar el tipo de expression (operador) expression, ver si ambos son int
             # Una vez se validó, lo podemos agregar a nuestro diccionario
-            self.nodeTypes[ctx] = 'bool'
+            self.nodeTypes[ctx] = 'boolean'
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
-            self.addError(ctx.start.line, "Operation expected two bool typed operators.")   
+            self.addError(ctx.start.line, "Operation expected two boolean typed operators.")   
 
     # !
     def exitExpr_not(self, ctx: DecafParser.Expr_notContext):
         op1 = ctx.getChild(1).getChild(0)
 
-        if(self.nodeTypes[op1] == 'bool'):
+        if(self.nodeTypes[op1] == 'boolean'):
             # Validar el tipo de expression (operador) expression, ver si ambos son int
             # Una vez se validó, lo podemos agregar a nuestro diccionario
-            self.nodeTypes[ctx] = 'bool'
+            self.nodeTypes[ctx] = 'boolean'
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
-            self.addError(ctx.start.line, "Operation expected a bool typed operator.")   
+            self.addError(ctx.start.line, "Operation expected a boolean typed operator.")   
 
     # TODO: Revisar paréntesis?
         
@@ -351,7 +348,7 @@ class DecafPrinter(DecafListener):
         self.nodeTypes[ctx] = 'char'
 
     def exitBool_literal(self, ctx: DecafParser.Bool_literalContext):
-        self.nodeTypes[ctx] = 'bool'
+        self.nodeTypes[ctx] = 'boolean'
 
     def exitExpr_loc(self, ctx: DecafParser.Expr_locContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
@@ -362,6 +359,13 @@ class DecafPrinter(DecafListener):
         # child1: .
         # child2: property
         # child3 is probably a dot, child 4 property, and so on...
+        if (ctx.expression()):
+            if (self.nodeTypes[ctx.expression()] != 'int'):
+                self.nodeTypes[ctx] = 'error'
+                self.addError(ctx.start.line, "<expr> in ID[<expr>] must be of type int.")  
+                return 
+
+        print(ctx.getText())
         myvar = self.lookupVarInSymbolTable(ctx.getText(), self.currentScope)
         if (myvar != None):
             self.nodeTypes[ctx] = myvar.varType
@@ -398,8 +402,8 @@ class DecafPrinter(DecafListener):
     def exitStat_if(self, ctx: DecafParser.Stat_ifContext):
         expression = ctx.getChild(2)
 
-        if(self.nodeTypes[expression] == 'bool'):
-            self.nodeTypes[ctx] = 'bool'
+        if(self.nodeTypes[expression] == 'boolean'):
+            self.nodeTypes[ctx] = 'boolean'
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
@@ -410,8 +414,8 @@ class DecafPrinter(DecafListener):
     def exitStat_else(self, ctx: DecafParser.Stat_elseContext):
         expression = ctx.getChild(2)
 
-        if(self.nodeTypes[expression] == 'bool'):
-            self.nodeTypes[ctx] = 'bool'
+        if(self.nodeTypes[expression] == 'boolean'):
+            self.nodeTypes[ctx] = 'boolean'
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
@@ -431,7 +435,7 @@ class DecafPrinter(DecafListener):
             return self.structDictionary[varType].size*num
 
     def addError(self, line, body):
-        errorMsg = "Error at line ( " + str(line) + " ): " + body
+        errorMsg = "Error at line (" + str(line) + "): " + body
         self.errorList.append(errorMsg)
   
     # -----------------------------------------------------------------------
@@ -469,9 +473,9 @@ class DecafPrinter(DecafListener):
     def lookupVarInSymbolTable(self, varId, scopeName):
         # Gets the SymbolTable 
         tempSymbolTable = self.scopeDictionary.get(scopeName).symbolTable
-
         searchedVar = None
-        #print(varId)
+        
+        print("lookingvar: ", varId)
         # b.c.a | z.a
         # b | z
         # c | a
@@ -556,7 +560,7 @@ def main(argv):
     walker = ParseTreeWalker()
     walker.walk(printer, tree)
 
-    """
+    
     for c, v in printer.scopeDictionary.items():
         print("KEY: ", c)
         print("     Parent scope: ", v.parentKey)
@@ -572,7 +576,7 @@ def main(argv):
         print("     Items: ")
         for var, varItem in v.structMembers.items():
             print("         VarId: " + var + ", VarType: " + varItem.varType + ", Num: " + str(varItem.num) + ", Size: " + str(varItem.size))
-    """
+    
     for error in printer.errorList:
         print(error)
     #traverse(tree, parser.ruleNames)
