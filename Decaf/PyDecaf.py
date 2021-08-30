@@ -158,6 +158,16 @@ class DecafPrinter(DecafListener):
         structId = ctx.getChild(1).getText()
         self.addStructToSymbolTable(structId)
 
+    def enterLocation(self, ctx: DecafParser.LocationContext):
+        if (ctx.expression()):
+            if (self.nodeTypes[ctx.expression()] != 'int'):
+                self.nodeTypes[ctx] = 'error'
+                self.addError(ctx.start.line, "<expr> in ID[<expr>] must be of type int.")  
+                return 
+
+        # Check if struct
+        # Set current struct to use
+
     # ----------------------------------------------------------------------
     # Exit
     def exitMethodDeclaration(self, ctx: DecafParser.MethodDeclarationContext):
@@ -353,19 +363,8 @@ class DecafPrinter(DecafListener):
     def exitExpr_loc(self, ctx: DecafParser.Expr_locContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
         
-    def exitLocation(self, ctx: DecafParser.LocationContext):
-        # If its a struct property its supposedly saved as 
-        # child0: structID
-        # child1: .
-        # child2: property
-        # child3 is probably a dot, child 4 property, and so on...
-        if (ctx.expression()):
-            if (self.nodeTypes[ctx.expression()] != 'int'):
-                self.nodeTypes[ctx] = 'error'
-                self.addError(ctx.start.line, "<expr> in ID[<expr>] must be of type int.")  
-                return 
-
-        print(ctx.getText())
+    def exitLocation(self, ctx: DecafParser.LocationContext, structList=None):
+        print(ctx.getChild(0).getText())
         myvar = self.lookupVarInSymbolTable(ctx.getText(), self.currentScope)
         if (myvar != None):
             self.nodeTypes[ctx] = myvar.varType
@@ -475,7 +474,20 @@ class DecafPrinter(DecafListener):
         tempSymbolTable = self.scopeDictionary.get(scopeName).symbolTable
         searchedVar = None
         
-        print("lookingvar: ", varId)
+        #print("lookingvar: ", varId)
+        # Someway to always get the type of the struct member without necessarily needing the struct?
+
+
+        """
+        Lo primero que pasa es que se entrará a location por algo como ej: y[j].b[0]
+        Primero se buscará el tipo de b[0], pero no se tiene contexto de donde viene.
+
+        - Se podría ignorar la llamada de un location si su padre es otro locationContext?
+            . Razon: no sabriamos de donde viene la llamada.
+
+        - Hacer structs y relacionado desde enterLocation en vez de exit?
+        """
+
         # b.c.a | z.a
         # b | z
         # c | a
@@ -560,7 +572,7 @@ def main(argv):
     walker = ParseTreeWalker()
     walker.walk(printer, tree)
 
-    
+    """
     for c, v in printer.scopeDictionary.items():
         print("KEY: ", c)
         print("     Parent scope: ", v.parentKey)
@@ -576,7 +588,7 @@ def main(argv):
         print("     Items: ")
         for var, varItem in v.structMembers.items():
             print("         VarId: " + var + ", VarType: " + varItem.varType + ", Num: " + str(varItem.num) + ", Size: " + str(varItem.size))
-    
+    """
     for error in printer.errorList:
         print(error)
     #traverse(tree, parser.ruleNames)
