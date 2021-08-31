@@ -348,7 +348,20 @@ class DecafPrinter(DecafListener):
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
-            self.addError(ctx.start.line, "Operation expected a boolean typed operator.")   
+            self.addError(ctx.start.line, "!: Operation expected a boolean typed operator.")   
+
+
+    def exitExpr_minus(self, ctx: DecafParser.Expr_minusContext):
+        op1 = ctx.getChild(1)
+
+        if(self.nodeTypes[op1] == 'int'):
+            # Validar el tipo de expression (operador) expression, ver si ambos son int
+            # Una vez se validó, lo podemos agregar a nuestro diccionario
+            self.nodeTypes[ctx] = 'int'
+        else:
+            # Si no pues es un error.
+            self.nodeTypes[ctx] = 'error'
+            self.addError(ctx.start.line, "-: Operation expected an int typed operator.")   
 
     def exitExpr_parenthesis(self, ctx: DecafParser.Expr_parenthesisContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.expression()]
@@ -364,13 +377,18 @@ class DecafPrinter(DecafListener):
 
     def exitExpr_loc(self, ctx: DecafParser.Expr_locContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
+    
+
         
     def exitLocation(self, ctx: DecafParser.LocationContext):
         if (ctx.expression()):
             if (self.nodeTypes[ctx.expression()] != 'int'):
                 self.nodeTypes[ctx] = 'error'
                 self.addError(ctx.start.line, "<expr> in ID[<expr>] must be of type int.")  
-                return 
+
+            if (type(ctx.expression()) == DecafParser.Expr_minusContext):
+                self.nodeTypes[ctx] = 'error'
+                self.addError(ctx.start.line, "Array index must be a non-negative number.")  
 
         if (type(ctx.parentCtx) == DecafParser.LocationContext and ctx.location() != None):
             if self.structToUse != None:

@@ -49,9 +49,9 @@ int InputInt(void)
 
 void main(void)
 {
-
 	int i;
 	i = 0;
+	i = A[-1]; 
 	while(i<10)
 	{
 		A[i]=InputInt();
