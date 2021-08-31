@@ -1,14 +1,10 @@
 import sys
-import re
 from antlr4 import *
 from antlr4.tree.Trees import TerminalNode
-from antlr4.error.ErrorListener import ErrorListener
-from antlr4.error.ErrorStrategy import ErrorStrategy, DefaultErrorStrategy
 from antlr4.error.Errors import *
 from DecafLexer import DecafLexer
 from DecafParser import DecafParser
 from DecafListener import DecafListener
-from DecafErrors import *
 
 # Stack
 class VarSymbolTableItem():
