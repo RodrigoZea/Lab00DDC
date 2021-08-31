@@ -15,6 +15,31 @@ struct B
 struct A y;
 struct A z;
 
+int factorial(int n)
+{
+	if (n==0){
+		return 1;
+	} else {
+		return n*factorial(n-1);
+	}
+}
+
+void OutputInt(int n)
+{
+	return;
+}
+
+void test(int a, int b, int c)
+{
+	return;
+}
+
+int InputInt(void)
+{return 0;}
+
+int ReturnNumber(void)
+{return z.a;}
+
 void main(void)
 {
 	struct B y[1];
@@ -47,29 +72,6 @@ void main(void)
 }
 
 
-int factorial(int n)
-{
-	if (n==0){
-		return 1;
-	} else {
-		return n*factorial(n-1);
-	}
-}
 
-void OutputInt(int n)
-{
-	return;
-}
-
-void test(int a, int b, int c)
-{
-	return;
-}
-
-int InputInt(void)
-{return 0;}
-
-int ReturnNumber(void)
-{return z.a;}
 
 }

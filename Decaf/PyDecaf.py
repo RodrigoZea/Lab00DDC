@@ -54,6 +54,7 @@ class DecafPrinter(DecafListener):
         self.startingValues = {'int': '0', 'boolean': 'false', 'char': 'a'}
         self.nodeTypes = {}
         self.mainFound = False
+        self.structToUse = None
 
         # Symbol table related
         self.currentMethodName = ""
@@ -159,14 +160,18 @@ class DecafPrinter(DecafListener):
         self.addStructToSymbolTable(structId)
 
     def enterLocation(self, ctx: DecafParser.LocationContext):
-        if (ctx.expression()):
-            if (self.nodeTypes[ctx.expression()] != 'int'):
-                self.nodeTypes[ctx] = 'error'
-                self.addError(ctx.start.line, "<expr> in ID[<expr>] must be of type int.")  
-                return 
+        anotherLocation = False
+        for child in ctx.children:
+            if type(child) == DecafParser.LocationContext:
+                anotherLocation = True
 
-        # Check if struct
-        # Set current struct to use
+        if (type(ctx.parentCtx) == DecafParser.LocationContext and anotherLocation):
+            newStructToUse = self.structToUse.structMembers[ctx.getChild(0).getText()]
+            self.structToUse = self.searchStructMember(newStructToUse.varType)
+        elif (ctx.location()):
+            varId = ctx.getChild(0).getText()
+            structVarType = self.lookupVarInSymbolTable(varId, self.currentScope)
+            self.structToUse = self.searchStructMember(structVarType.varType)
 
     # ----------------------------------------------------------------------
     # Exit
@@ -181,6 +186,7 @@ class DecafPrinter(DecafListener):
         self.enterScope("global")
 
     def exitMethodCall(self, ctx: DecafParser.MethodCallContext):
+        #self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
         methodName = ctx.getChild(0).getText()
         args = ctx.getChild(2).getText()
 
@@ -188,9 +194,12 @@ class DecafPrinter(DecafListener):
 
         if (methodObj != None):
             methodCallTypes = []
-            for child in ctx.children:
-                if type(child) == DecafParser.Expr_locContext:
-                    methodCallTypes.append(self.nodeTypes[child])
+
+            for i in range(0, len(ctx.children)):
+                if i > 1 and i < len(ctx.children)-1:
+                    if (ctx.getChild(i).getText() != ","):
+                        methodCallTypes.append(self.nodeTypes[ctx.getChild(i)])
+
 
             # TODO: Check with more than 1 arg and no args
             paramsEquality = self.compareParameters(methodObj, args, methodCallTypes)
@@ -216,11 +225,8 @@ class DecafPrinter(DecafListener):
         # 2: ;
         # Everything related to returns
         if ctx.getChild(0).getText() == "return":
-            # Block context
-            blockContext = ctx.parentCtx
-
-            methodDeclarationCtx = blockContext.parentCtx
-            methodType = methodDeclarationCtx.getChild(0).getText()
+            rootMethod = self.getReturnTypeOfMethod(self.currentScope)
+            methodType = rootMethod.returnType
             expressionOom = ctx.getChild(1)
 
             if (ctx.getChild(1).getText() == ""):
@@ -238,7 +244,6 @@ class DecafPrinter(DecafListener):
 
                     if (exprType == methodType):
                         self.nodeTypes[ctx] = 'void'
-                        print("same type")
                     else:
                         self.nodeTypes[ctx] = 'error'
                         self.addError(ctx.start.line, "Return statement type doesn't match with method type.")
@@ -247,7 +252,7 @@ class DecafPrinter(DecafListener):
                     self.addError(ctx.start.line, "Method type is not accepted by language.")                      
 
     # NOTE: Se debe de saltar un nodo siempre porque no se está tomando en cuenta el expression padre, se debe obtener el t ipo de los literals.
-    # * / % << >>
+    # * / %
     def exitExpr_arith5(self, ctx: DecafParser.Expr_arith5Context):
         op1 = ctx.getChild(0).getChild(0)
         op2 = ctx.getChild(2).getChild(0)
@@ -349,7 +354,8 @@ class DecafPrinter(DecafListener):
             self.nodeTypes[ctx] = 'error'
             self.addError(ctx.start.line, "Operation expected a boolean typed operator.")   
 
-    # TODO: Revisar paréntesis?
+    def exitExpr_parenthesis(self, ctx: DecafParser.Expr_parenthesisContext):
+        self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
         
     def exitInt_literal(self, ctx: DecafParser.Int_literalContext):
         self.nodeTypes[ctx] = 'int'
@@ -363,14 +369,32 @@ class DecafPrinter(DecafListener):
     def exitExpr_loc(self, ctx: DecafParser.Expr_locContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
         
-    def exitLocation(self, ctx: DecafParser.LocationContext, structList=None):
-        print(ctx.getChild(0).getText())
-        myvar = self.lookupVarInSymbolTable(ctx.getText(), self.currentScope)
-        if (myvar != None):
-            self.nodeTypes[ctx] = myvar.varType
+    def exitLocation(self, ctx: DecafParser.LocationContext):
+        if (ctx.expression()):
+            if (self.nodeTypes[ctx.expression()] != 'int'):
+                self.nodeTypes[ctx] = 'error'
+                self.addError(ctx.start.line, "<expr> in ID[<expr>] must be of type int.")  
+                return 
+
+        if (type(ctx.parentCtx) == DecafParser.LocationContext and ctx.location() != None):
+            if self.structToUse != None:
+                self.nodeTypes[ctx] = self.nodeTypes[ctx.location()]
+        elif (type(ctx.parentCtx) == DecafParser.LocationContext):
+            if self.structToUse != None:
+                myvar = self.structToUse.structMembers[ctx.getChild(0).getText()]
+                if (myvar != None):
+                    self.nodeTypes[ctx] = myvar.varType
+        elif (ctx.location() != None):
+            if self.structToUse != None:
+                self.nodeTypes[ctx] = self.nodeTypes[ctx.location()]
         else:
-            self.nodeTypes[ctx] = 'error'
-            self.addError(ctx.start.line, "Variable hasn't been defined yet.")   
+            myvar = self.lookupVarInSymbolTable(ctx.getChild(0).getText(), self.currentScope)
+            if (myvar != None):
+                self.nodeTypes[ctx] = myvar.varType
+            else:
+                self.nodeTypes[ctx] = 'error'
+                self.addError(ctx.start.line, "Variable hasn't been defined yet.")   
+
 
     def exitVarDeclaration(self, ctx: DecafParser.VarDeclarationContext):
         varType = ctx.getChild(0).getText()
@@ -384,6 +408,7 @@ class DecafPrinter(DecafListener):
 
     def exitExpr_mcall(self, ctx: DecafParser.Expr_mcallContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
+    
 
     def exitStat_assignment(self, ctx: DecafParser.Stat_assignmentContext):
         op1 = ctx.getChild(0)
@@ -473,40 +498,17 @@ class DecafPrinter(DecafListener):
         # Gets the SymbolTable 
         tempSymbolTable = self.scopeDictionary.get(scopeName).symbolTable
         searchedVar = None
-        
-        #print("lookingvar: ", varId)
-        # Someway to always get the type of the struct member without necessarily needing the struct?
 
-
-        """
-        Lo primero que pasa es que se entrará a location por algo como ej: y[j].b[0]
-        Primero se buscará el tipo de b[0], pero no se tiene contexto de donde viene.
-
-        - Se podría ignorar la llamada de un location si su padre es otro locationContext?
-            . Razon: no sabriamos de donde viene la llamada.
-
-        - Hacer structs y relacionado desde enterLocation en vez de exit?
-        """
-
-        # b.c.a | z.a
-        # b | z
-        # c | a
-        # a
-        if ("." in varId):
-        # Procedure if it contains a . (meaning its a struct property)
-            parts = varId.split(".")
-            print(parts)
-        else:
         # Procedure for a normal var
-            if varId in tempSymbolTable:
-                searchedVar = tempSymbolTable[varId]
-            else:
-                newScope = self.scopeDictionary.get(scopeName).parentKey
+        if varId in tempSymbolTable:
+            searchedVar = tempSymbolTable[varId]
+        else:
+            newScope = self.scopeDictionary.get(scopeName).parentKey
 
-                if (newScope != None):
-                    searchedVar = self.lookupVarInSymbolTable(varId, newScope)
+            if (newScope != None):
+                searchedVar = self.lookupVarInSymbolTable(varId, newScope)
 
-            return searchedVar
+        return searchedVar
 
     def updateVarInSymbolTable(self, varId, varValue, scopeName):
         print("updating value")
@@ -514,6 +516,15 @@ class DecafPrinter(DecafListener):
     def lookupMethodInSymbolTable(self, methodId):
         scopeObject = self.scopeDictionary.get(methodId)
         return scopeObject
+
+    def getReturnTypeOfMethod(self, scope):
+        scopeObject = self.scopeDictionary.get(scope)
+
+        if (scopeObject.parentKey != "global"):
+            scopeObject = self.getReturnTypeOfMethod(scopeObject.parentKey)
+
+        return scopeObject
+        
 
     def compareParameters(self, methodObj, args, methodCallTypes):
         symbolTable = methodObj.symbolTable
@@ -560,6 +571,12 @@ class DecafPrinter(DecafListener):
         self.structDictionary.get(structId).size = tempStructSize
         return canAdd
 
+    def searchStructMember(self, structId):
+        structMember = None
+        if structId in self.structDictionary:
+            structMember = self.structDictionary[structId]
+
+        return structMember
 #---------------------------------------------------------------------------------------------------
 
 def main(argv):
