@@ -254,8 +254,8 @@ class DecafPrinter(DecafListener):
     # NOTE: Se debe de saltar un nodo siempre porque no se está tomando en cuenta el expression padre, se debe obtener el t ipo de los literals.
     # * / %
     def exitExpr_arith5(self, ctx: DecafParser.Expr_arith5Context):
-        op1 = ctx.getChild(0).getChild(0)
-        op2 = ctx.getChild(2).getChild(0)
+        op1 = ctx.getChild(0)
+        op2 = ctx.getChild(2)
 
         if(self.nodeTypes[op1] == 'int' and self.nodeTypes[op2] == 'int'):
             # Validar el tipo de expression (operador) expression, ver si ambos son int
@@ -267,8 +267,8 @@ class DecafPrinter(DecafListener):
             self.addError(ctx.start.line, "Operation expected two integer typed operators.")     
     # + -
     def exitExpr_arith4(self, ctx: DecafParser.Expr_arith5Context):
-        op1 = ctx.getChild(0).getChild(0)
-        op2 = ctx.getChild(2).getChild(0)
+        op1 = ctx.getChild(0)
+        op2 = ctx.getChild(2)
 
         if(self.nodeTypes[op1] == 'int' and self.nodeTypes[op2] == 'int'):
             # Validar el tipo de expression (operador) expression, ver si ambos son int
@@ -281,8 +281,8 @@ class DecafPrinter(DecafListener):
 
     # eq_op: == != | rel_op: < <= > >=
     def exitExpr_arith3(self, ctx: DecafParser.Expr_arith3Context):
-        op1 = ctx.getChild(0).getChild(0)
-        op2 = ctx.getChild(2).getChild(0)
+        op1 = ctx.getChild(0)
+        op2 = ctx.getChild(2)
         symbol = ctx.getChild(1).getText()
 
         if (symbol == '<' or symbol == '<=' or symbol == '>' or symbol == '>='):
@@ -315,8 +315,8 @@ class DecafPrinter(DecafListener):
 
     # &&
     def exitArith_op_second(self, ctx: DecafParser.Arith_op_secondContext):
-        op1 = ctx.getChild(0).getChild(0)
-        op2 = ctx.getChild(2).getChild(0)
+        op1 = ctx.getChild(0)
+        op2 = ctx.getChild(2)
 
         if(self.nodeTypes[op1] == 'boolean' and self.nodeTypes[op2] == 'boolean'):
             # Validar el tipo de expression (operador) expression, ver si ambos son int
@@ -329,8 +329,8 @@ class DecafPrinter(DecafListener):
 
     # ||
     def exitArith_op_first(self, ctx: DecafParser.Arith_op_firstContext):
-        op1 = ctx.getChild(0).getChild(0)
-        op2 = ctx.getChild(2).getChild(0)
+        op1 = ctx.getChild(0)
+        op2 = ctx.getChild(2)
 
         if(self.nodeTypes[op1] == 'boolean' and self.nodeTypes[op2] == 'boolean'):
             # Validar el tipo de expression (operador) expression, ver si ambos son int
@@ -343,7 +343,7 @@ class DecafPrinter(DecafListener):
 
     # !
     def exitExpr_not(self, ctx: DecafParser.Expr_notContext):
-        op1 = ctx.getChild(1).getChild(0)
+        op1 = ctx.getChild(1)
 
         if(self.nodeTypes[op1] == 'boolean'):
             # Validar el tipo de expression (operador) expression, ver si ambos son int
@@ -355,7 +355,7 @@ class DecafPrinter(DecafListener):
             self.addError(ctx.start.line, "Operation expected a boolean typed operator.")   
 
     def exitExpr_parenthesis(self, ctx: DecafParser.Expr_parenthesisContext):
-        self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
+        self.nodeTypes[ctx] = self.nodeTypes[ctx.expression()]
         
     def exitInt_literal(self, ctx: DecafParser.Int_literalContext):
         self.nodeTypes[ctx] = 'int'
@@ -579,8 +579,8 @@ class DecafPrinter(DecafListener):
         return structMember
 #---------------------------------------------------------------------------------------------------
 
-def main(argv):
-    input_stream = FileStream(argv[1])
+def check(argv):
+    input_stream = FileStream(argv)
     lexer = DecafLexer(input_stream)
     stream = CommonTokenStream(lexer)
     parser = DecafParser(stream)
@@ -608,7 +608,9 @@ def main(argv):
     """
     for error in printer.errorList:
         print(error)
+
     #traverse(tree, parser.ruleNames)
+    return printer.errorList
 
 def traverse(tree, rule_names, indent = 0):
     if tree.getText() == "<EOF>":

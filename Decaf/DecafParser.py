@@ -11,7 +11,7 @@ else:
 
 def serializedATN():
     with StringIO() as buf:
-        buf.write("\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3\60")
+        buf.write("\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3.")
         buf.write("\u011e\4\2\t\2\4\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7")
         buf.write("\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t\13\4\f\t\f\4\r\t\r\4\16")
         buf.write("\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22\4\23\t\23")
@@ -34,42 +34,42 @@ def serializedATN():
         buf.write("\3\17\3\17\3\17\3\17\3\17\3\17\3\17\3\17\3\17\3\17\3\17")
         buf.write("\3\17\3\17\3\17\3\17\3\17\3\17\3\17\3\17\3\17\7\17\u00ee")
         buf.write("\n\17\f\17\16\17\u00f1\13\17\3\20\3\20\3\20\3\20\3\20")
-        buf.write("\5\20\u00f8\n\20\7\20\u00fa\n\20\f\20\16\20\u00fd\13\20")
+        buf.write("\7\20\u00f8\n\20\f\20\16\20\u00fb\13\20\5\20\u00fd\n\20")
         buf.write("\3\20\3\20\3\21\3\21\3\22\3\22\3\23\3\23\3\24\3\24\3\25")
         buf.write("\3\25\5\25\u010b\n\25\3\26\3\26\3\27\3\27\3\30\3\30\3")
         buf.write("\30\5\30\u0114\n\30\3\31\3\31\3\32\3\32\3\32\3\32\3\33")
         buf.write("\3\33\3\33\2\3\34\34\2\4\6\b\n\f\16\20\22\24\26\30\32")
         buf.write("\34\36 \"$&(*,.\60\62\64\2\t\3\2\13\16\3\2\13\r\3\2\32")
-        buf.write("\35\3\2\36\37\3\2 $\4\2\30\30%%\3\2)*\2\u012e\2\66\3\2")
-        buf.write("\2\2\4D\3\2\2\2\6Q\3\2\2\2\bS\3\2\2\2\ng\3\2\2\2\fi\3")
-        buf.write("\2\2\2\16|\3\2\2\2\20\u0087\3\2\2\2\22\u0089\3\2\2\2\24")
-        buf.write("\u008b\3\2\2\2\26\u00b9\3\2\2\2\30\u00bd\3\2\2\2\32\u00c5")
-        buf.write("\3\2\2\2\34\u00d7\3\2\2\2\36\u00f2\3\2\2\2 \u0100\3\2")
-        buf.write("\2\2\"\u0102\3\2\2\2$\u0104\3\2\2\2&\u0106\3\2\2\2(\u010a")
-        buf.write("\3\2\2\2*\u010c\3\2\2\2,\u010e\3\2\2\2.\u0113\3\2\2\2")
-        buf.write("\60\u0115\3\2\2\2\62\u0117\3\2\2\2\64\u011b\3\2\2\2\66")
-        buf.write("\67\7\3\2\2\678\7\4\2\28<\7\5\2\29;\5\4\3\2:9\3\2\2\2")
-        buf.write(";>\3\2\2\2<:\3\2\2\2<=\3\2\2\2=?\3\2\2\2><\3\2\2\2?@\7")
-        buf.write("\6\2\2@\3\3\2\2\2AE\5\b\5\2BE\5\6\4\2CE\5\f\7\2DA\3\2")
-        buf.write("\2\2DB\3\2\2\2DC\3\2\2\2E\5\3\2\2\2FG\5\n\6\2GH\7+\2\2")
-        buf.write("HI\7\7\2\2IR\3\2\2\2JK\5\n\6\2KL\7+\2\2LM\7\b\2\2MN\7")
-        buf.write(",\2\2NO\7\t\2\2OP\7\7\2\2PR\3\2\2\2QF\3\2\2\2QJ\3\2\2")
-        buf.write("\2R\7\3\2\2\2ST\7\n\2\2TU\7+\2\2UY\7\5\2\2VX\5\6\4\2W")
-        buf.write("V\3\2\2\2X[\3\2\2\2YW\3\2\2\2YZ\3\2\2\2Z\\\3\2\2\2[Y\3")
-        buf.write("\2\2\2\\^\7\6\2\2]_\7\7\2\2^]\3\2\2\2^_\3\2\2\2_\t\3\2")
-        buf.write("\2\2`h\7\13\2\2ah\7\f\2\2bh\7\r\2\2cd\7\n\2\2dh\7+\2\2")
-        buf.write("eh\5\b\5\2fh\7\16\2\2g`\3\2\2\2ga\3\2\2\2gb\3\2\2\2gc")
-        buf.write("\3\2\2\2ge\3\2\2\2gf\3\2\2\2h\13\3\2\2\2ij\5\16\b\2jk")
-        buf.write("\7+\2\2kv\7\17\2\2lq\5\20\t\2mn\7\20\2\2np\5\20\t\2om")
-        buf.write("\3\2\2\2ps\3\2\2\2qo\3\2\2\2qr\3\2\2\2ru\3\2\2\2sq\3\2")
-        buf.write("\2\2tl\3\2\2\2ux\3\2\2\2vt\3\2\2\2vw\3\2\2\2wy\3\2\2\2")
-        buf.write("xv\3\2\2\2yz\7\21\2\2z{\5\24\13\2{\r\3\2\2\2|}\t\2\2\2")
-        buf.write("}\17\3\2\2\2~\177\5\22\n\2\177\u0080\7+\2\2\u0080\u0088")
-        buf.write("\3\2\2\2\u0081\u0082\5\22\n\2\u0082\u0083\7+\2\2\u0083")
-        buf.write("\u0084\7\b\2\2\u0084\u0085\7\t\2\2\u0085\u0088\3\2\2\2")
-        buf.write("\u0086\u0088\7\16\2\2\u0087~\3\2\2\2\u0087\u0081\3\2\2")
-        buf.write("\2\u0087\u0086\3\2\2\2\u0088\21\3\2\2\2\u0089\u008a\t")
-        buf.write("\3\2\2\u008a\23\3\2\2\2\u008b\u008f\7\5\2\2\u008c\u008e")
+        buf.write("\35\3\2\36\37\3\2 \"\4\2\30\30##\3\2\'(\2\u012e\2\66\3")
+        buf.write("\2\2\2\4D\3\2\2\2\6Q\3\2\2\2\bS\3\2\2\2\ng\3\2\2\2\fi")
+        buf.write("\3\2\2\2\16|\3\2\2\2\20\u0087\3\2\2\2\22\u0089\3\2\2\2")
+        buf.write("\24\u008b\3\2\2\2\26\u00b9\3\2\2\2\30\u00bd\3\2\2\2\32")
+        buf.write("\u00c5\3\2\2\2\34\u00d7\3\2\2\2\36\u00f2\3\2\2\2 \u0100")
+        buf.write("\3\2\2\2\"\u0102\3\2\2\2$\u0104\3\2\2\2&\u0106\3\2\2\2")
+        buf.write("(\u010a\3\2\2\2*\u010c\3\2\2\2,\u010e\3\2\2\2.\u0113\3")
+        buf.write("\2\2\2\60\u0115\3\2\2\2\62\u0117\3\2\2\2\64\u011b\3\2")
+        buf.write("\2\2\66\67\7\3\2\2\678\7\4\2\28<\7\5\2\29;\5\4\3\2:9\3")
+        buf.write("\2\2\2;>\3\2\2\2<:\3\2\2\2<=\3\2\2\2=?\3\2\2\2><\3\2\2")
+        buf.write("\2?@\7\6\2\2@\3\3\2\2\2AE\5\b\5\2BE\5\6\4\2CE\5\f\7\2")
+        buf.write("DA\3\2\2\2DB\3\2\2\2DC\3\2\2\2E\5\3\2\2\2FG\5\n\6\2GH")
+        buf.write("\7)\2\2HI\7\7\2\2IR\3\2\2\2JK\5\n\6\2KL\7)\2\2LM\7\b\2")
+        buf.write("\2MN\7*\2\2NO\7\t\2\2OP\7\7\2\2PR\3\2\2\2QF\3\2\2\2QJ")
+        buf.write("\3\2\2\2R\7\3\2\2\2ST\7\n\2\2TU\7)\2\2UY\7\5\2\2VX\5\6")
+        buf.write("\4\2WV\3\2\2\2X[\3\2\2\2YW\3\2\2\2YZ\3\2\2\2Z\\\3\2\2")
+        buf.write("\2[Y\3\2\2\2\\^\7\6\2\2]_\7\7\2\2^]\3\2\2\2^_\3\2\2\2")
+        buf.write("_\t\3\2\2\2`h\7\13\2\2ah\7\f\2\2bh\7\r\2\2cd\7\n\2\2d")
+        buf.write("h\7)\2\2eh\5\b\5\2fh\7\16\2\2g`\3\2\2\2ga\3\2\2\2gb\3")
+        buf.write("\2\2\2gc\3\2\2\2ge\3\2\2\2gf\3\2\2\2h\13\3\2\2\2ij\5\16")
+        buf.write("\b\2jk\7)\2\2kv\7\17\2\2lq\5\20\t\2mn\7\20\2\2np\5\20")
+        buf.write("\t\2om\3\2\2\2ps\3\2\2\2qo\3\2\2\2qr\3\2\2\2ru\3\2\2\2")
+        buf.write("sq\3\2\2\2tl\3\2\2\2ux\3\2\2\2vt\3\2\2\2vw\3\2\2\2wy\3")
+        buf.write("\2\2\2xv\3\2\2\2yz\7\21\2\2z{\5\24\13\2{\r\3\2\2\2|}\t")
+        buf.write("\2\2\2}\17\3\2\2\2~\177\5\22\n\2\177\u0080\7)\2\2\u0080")
+        buf.write("\u0088\3\2\2\2\u0081\u0082\5\22\n\2\u0082\u0083\7)\2\2")
+        buf.write("\u0083\u0084\7\b\2\2\u0084\u0085\7\t\2\2\u0085\u0088\3")
+        buf.write("\2\2\2\u0086\u0088\7\16\2\2\u0087~\3\2\2\2\u0087\u0081")
+        buf.write("\3\2\2\2\u0087\u0086\3\2\2\2\u0088\21\3\2\2\2\u0089\u008a")
+        buf.write("\t\3\2\2\u008a\23\3\2\2\2\u008b\u008f\7\5\2\2\u008c\u008e")
         buf.write("\5\6\4\2\u008d\u008c\3\2\2\2\u008e\u0091\3\2\2\2\u008f")
         buf.write("\u008d\3\2\2\2\u008f\u0090\3\2\2\2\u0090\u0095\3\2\2\2")
         buf.write("\u0091\u008f\3\2\2\2\u0092\u0094\5\26\f\2\u0093\u0092")
@@ -93,7 +93,7 @@ def serializedATN():
         buf.write("\2\2\2\u00b9\u00b1\3\2\2\2\u00b9\u00b6\3\2\2\2\u00ba\27")
         buf.write("\3\2\2\2\u00bb\u00be\5\34\17\2\u00bc\u00be\3\2\2\2\u00bd")
         buf.write("\u00bb\3\2\2\2\u00bd\u00bc\3\2\2\2\u00be\31\3\2\2\2\u00bf")
-        buf.write("\u00c6\7+\2\2\u00c0\u00c1\7+\2\2\u00c1\u00c2\7\b\2\2\u00c2")
+        buf.write("\u00c6\7)\2\2\u00c0\u00c1\7)\2\2\u00c1\u00c2\7\b\2\2\u00c2")
         buf.write("\u00c3\5\34\17\2\u00c3\u00c4\7\t\2\2\u00c4\u00c6\3\2\2")
         buf.write("\2\u00c5\u00bf\3\2\2\2\u00c5\u00c0\3\2\2\2\u00c6\u00c9")
         buf.write("\3\2\2\2\u00c7\u00c8\7\27\2\2\u00c8\u00ca\5\32\16\2\u00c9")
@@ -116,25 +116,25 @@ def serializedATN():
         buf.write("\u00dd\3\2\2\2\u00ed\u00e1\3\2\2\2\u00ed\u00e5\3\2\2\2")
         buf.write("\u00ed\u00e9\3\2\2\2\u00ee\u00f1\3\2\2\2\u00ef\u00ed\3")
         buf.write("\2\2\2\u00ef\u00f0\3\2\2\2\u00f0\35\3\2\2\2\u00f1\u00ef")
-        buf.write("\3\2\2\2\u00f2\u00f3\7+\2\2\u00f3\u00fb\7\17\2\2\u00f4")
-        buf.write("\u00f7\5\34\17\2\u00f5\u00f6\7\20\2\2\u00f6\u00f8\5\34")
-        buf.write("\17\2\u00f7\u00f5\3\2\2\2\u00f7\u00f8\3\2\2\2\u00f8\u00fa")
-        buf.write("\3\2\2\2\u00f9\u00f4\3\2\2\2\u00fa\u00fd\3\2\2\2\u00fb")
-        buf.write("\u00f9\3\2\2\2\u00fb\u00fc\3\2\2\2\u00fc\u00fe\3\2\2\2")
-        buf.write("\u00fd\u00fb\3\2\2\2\u00fe\u00ff\7\21\2\2\u00ff\37\3\2")
+        buf.write("\3\2\2\2\u00f2\u00f3\7)\2\2\u00f3\u00fc\7\17\2\2\u00f4")
+        buf.write("\u00f9\5\34\17\2\u00f5\u00f6\7\20\2\2\u00f6\u00f8\5\34")
+        buf.write("\17\2\u00f7\u00f5\3\2\2\2\u00f8\u00fb\3\2\2\2\u00f9\u00f7")
+        buf.write("\3\2\2\2\u00f9\u00fa\3\2\2\2\u00fa\u00fd\3\2\2\2\u00fb")
+        buf.write("\u00f9\3\2\2\2\u00fc\u00f4\3\2\2\2\u00fc\u00fd\3\2\2\2")
+        buf.write("\u00fd\u00fe\3\2\2\2\u00fe\u00ff\7\21\2\2\u00ff\37\3\2")
         buf.write("\2\2\u0100\u0101\t\4\2\2\u0101!\3\2\2\2\u0102\u0103\t")
         buf.write("\5\2\2\u0103#\3\2\2\2\u0104\u0105\t\6\2\2\u0105%\3\2\2")
         buf.write("\2\u0106\u0107\t\7\2\2\u0107\'\3\2\2\2\u0108\u010b\5 ")
         buf.write("\21\2\u0109\u010b\5\"\22\2\u010a\u0108\3\2\2\2\u010a\u0109")
-        buf.write("\3\2\2\2\u010b)\3\2\2\2\u010c\u010d\7&\2\2\u010d+\3\2")
-        buf.write("\2\2\u010e\u010f\7\'\2\2\u010f-\3\2\2\2\u0110\u0114\5")
-        buf.write("\60\31\2\u0111\u0114\5\62\32\2\u0112\u0114\5\64\33\2\u0113")
+        buf.write("\3\2\2\2\u010b)\3\2\2\2\u010c\u010d\7$\2\2\u010d+\3\2")
+        buf.write("\2\2\u010e\u010f\7%\2\2\u010f-\3\2\2\2\u0110\u0114\5\60")
+        buf.write("\31\2\u0111\u0114\5\62\32\2\u0112\u0114\5\64\33\2\u0113")
         buf.write("\u0110\3\2\2\2\u0113\u0111\3\2\2\2\u0113\u0112\3\2\2\2")
-        buf.write("\u0114/\3\2\2\2\u0115\u0116\7,\2\2\u0116\61\3\2\2\2\u0117")
-        buf.write("\u0118\7(\2\2\u0118\u0119\7-\2\2\u0119\u011a\7(\2\2\u011a")
+        buf.write("\u0114/\3\2\2\2\u0115\u0116\7*\2\2\u0116\61\3\2\2\2\u0117")
+        buf.write("\u0118\7&\2\2\u0118\u0119\7+\2\2\u0119\u011a\7&\2\2\u011a")
         buf.write("\63\3\2\2\2\u011b\u011c\t\b\2\2\u011c\65\3\2\2\2\32<D")
         buf.write("QY^gqv\u0087\u008f\u0095\u00a1\u00b6\u00b9\u00bd\u00c5")
-        buf.write("\u00c9\u00d7\u00ed\u00ef\u00f7\u00fb\u010a\u0113")
+        buf.write("\u00c9\u00d7\u00ed\u00ef\u00f9\u00fc\u010a\u0113")
         return buf.getvalue()
 
 
@@ -153,8 +153,8 @@ class DecafParser ( Parser ):
                      "'boolean'", "'void'", "'('", "','", "')'", "'if'", 
                      "'else'", "'while'", "'return'", "'='", "'.'", "'-'", 
                      "'!'", "'<'", "'>'", "'<='", "'>='", "'=='", "'!='", 
-                     "'*'", "'/'", "'%'", "'<<'", "'>>'", "'+'", "'&&'", 
-                     "'||'", "'''", "'true'", "'false'" ]
+                     "'*'", "'/'", "'%'", "'+'", "'&&'", "'||'", "'''", 
+                     "'true'", "'false'" ]
 
     symbolicNames = [ "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                       "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
@@ -165,9 +165,8 @@ class DecafParser ( Parser ):
                       "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                       "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                       "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
-                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
-                      "<INVALID>", "ID", "NUM", "CHAR", "WS", "COMMENT", 
-                      "LINE_COMMENT" ]
+                      "<INVALID>", "<INVALID>", "<INVALID>", "ID", "NUM", 
+                      "CHAR", "WS", "COMMENT", "LINE_COMMENT" ]
 
     RULE_program = 0
     RULE_declaration = 1
@@ -243,14 +242,12 @@ class DecafParser ( Parser ):
     T__35=36
     T__36=37
     T__37=38
-    T__38=39
-    T__39=40
-    ID=41
-    NUM=42
-    CHAR=43
-    WS=44
-    COMMENT=45
-    LINE_COMMENT=46
+    ID=39
+    NUM=40
+    CHAR=41
+    WS=42
+    COMMENT=43
+    LINE_COMMENT=44
 
     def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
         super().__init__(input, output)
@@ -930,7 +927,7 @@ class DecafParser ( Parser ):
             self.state = 147
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            while (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << DecafParser.T__2) | (1 << DecafParser.T__4) | (1 << DecafParser.T__12) | (1 << DecafParser.T__15) | (1 << DecafParser.T__17) | (1 << DecafParser.T__18) | (1 << DecafParser.T__21) | (1 << DecafParser.T__22) | (1 << DecafParser.T__37) | (1 << DecafParser.T__38) | (1 << DecafParser.T__39) | (1 << DecafParser.ID) | (1 << DecafParser.NUM))) != 0):
+            while (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << DecafParser.T__2) | (1 << DecafParser.T__4) | (1 << DecafParser.T__12) | (1 << DecafParser.T__15) | (1 << DecafParser.T__17) | (1 << DecafParser.T__18) | (1 << DecafParser.T__21) | (1 << DecafParser.T__22) | (1 << DecafParser.T__35) | (1 << DecafParser.T__36) | (1 << DecafParser.T__37) | (1 << DecafParser.ID) | (1 << DecafParser.NUM))) != 0):
                 self.state = 144
                 self.statement()
                 self.state = 149
@@ -1204,7 +1201,7 @@ class DecafParser ( Parser ):
                 self.state = 180
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << DecafParser.T__12) | (1 << DecafParser.T__21) | (1 << DecafParser.T__22) | (1 << DecafParser.T__37) | (1 << DecafParser.T__38) | (1 << DecafParser.T__39) | (1 << DecafParser.ID) | (1 << DecafParser.NUM))) != 0):
+                if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << DecafParser.T__12) | (1 << DecafParser.T__21) | (1 << DecafParser.T__22) | (1 << DecafParser.T__35) | (1 << DecafParser.T__36) | (1 << DecafParser.T__37) | (1 << DecafParser.ID) | (1 << DecafParser.NUM))) != 0):
                     self.state = 179
                     self.expression(0)
 
@@ -1256,7 +1253,7 @@ class DecafParser ( Parser ):
             self.state = 187
             self._errHandler.sync(self)
             token = self._input.LA(1)
-            if token in [DecafParser.T__12, DecafParser.T__21, DecafParser.T__22, DecafParser.T__37, DecafParser.T__38, DecafParser.T__39, DecafParser.ID, DecafParser.NUM]:
+            if token in [DecafParser.T__12, DecafParser.T__21, DecafParser.T__22, DecafParser.T__35, DecafParser.T__36, DecafParser.T__37, DecafParser.ID, DecafParser.NUM]:
                 self.enterOuterAlt(localctx, 1)
                 self.state = 185
                 self.expression(0)
@@ -1813,25 +1810,25 @@ class DecafParser ( Parser ):
             self.match(DecafParser.ID)
             self.state = 241
             self.match(DecafParser.T__12)
-            self.state = 249
+            self.state = 250
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            while (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << DecafParser.T__12) | (1 << DecafParser.T__21) | (1 << DecafParser.T__22) | (1 << DecafParser.T__37) | (1 << DecafParser.T__38) | (1 << DecafParser.T__39) | (1 << DecafParser.ID) | (1 << DecafParser.NUM))) != 0):
+            if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << DecafParser.T__12) | (1 << DecafParser.T__21) | (1 << DecafParser.T__22) | (1 << DecafParser.T__35) | (1 << DecafParser.T__36) | (1 << DecafParser.T__37) | (1 << DecafParser.ID) | (1 << DecafParser.NUM))) != 0):
                 self.state = 242
                 self.expression(0)
-                self.state = 245
+                self.state = 247
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if _la==DecafParser.T__13:
+                while _la==DecafParser.T__13:
                     self.state = 243
                     self.match(DecafParser.T__13)
                     self.state = 244
                     self.expression(0)
+                    self.state = 249
+                    self._errHandler.sync(self)
+                    _la = self._input.LA(1)
 
 
-                self.state = 251
-                self._errHandler.sync(self)
-                _la = self._input.LA(1)
 
             self.state = 252
             self.match(DecafParser.T__14)
@@ -1965,7 +1962,7 @@ class DecafParser ( Parser ):
             self.enterOuterAlt(localctx, 1)
             self.state = 258
             _la = self._input.LA(1)
-            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << DecafParser.T__29) | (1 << DecafParser.T__30) | (1 << DecafParser.T__31) | (1 << DecafParser.T__32) | (1 << DecafParser.T__33))) != 0)):
+            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << DecafParser.T__29) | (1 << DecafParser.T__30) | (1 << DecafParser.T__31))) != 0)):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)
@@ -2010,7 +2007,7 @@ class DecafParser ( Parser ):
             self.enterOuterAlt(localctx, 1)
             self.state = 260
             _la = self._input.LA(1)
-            if not(_la==DecafParser.T__21 or _la==DecafParser.T__34):
+            if not(_la==DecafParser.T__21 or _la==DecafParser.T__32):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)
@@ -2112,7 +2109,7 @@ class DecafParser ( Parser ):
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 266
-            self.match(DecafParser.T__35)
+            self.match(DecafParser.T__33)
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -2151,7 +2148,7 @@ class DecafParser ( Parser ):
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 268
-            self.match(DecafParser.T__36)
+            self.match(DecafParser.T__34)
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -2207,12 +2204,12 @@ class DecafParser ( Parser ):
                 self.state = 270
                 self.int_literal()
                 pass
-            elif token in [DecafParser.T__37]:
+            elif token in [DecafParser.T__35]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 271
                 self.char_literal()
                 pass
-            elif token in [DecafParser.T__38, DecafParser.T__39]:
+            elif token in [DecafParser.T__36, DecafParser.T__37]:
                 self.enterOuterAlt(localctx, 3)
                 self.state = 272
                 self.bool_literal()
@@ -2301,11 +2298,11 @@ class DecafParser ( Parser ):
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 277
-            self.match(DecafParser.T__37)
+            self.match(DecafParser.T__35)
             self.state = 278
             self.match(DecafParser.CHAR)
             self.state = 279
-            self.match(DecafParser.T__37)
+            self.match(DecafParser.T__35)
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -2346,7 +2343,7 @@ class DecafParser ( Parser ):
             self.enterOuterAlt(localctx, 1)
             self.state = 281
             _la = self._input.LA(1)
-            if not(_la==DecafParser.T__38 or _la==DecafParser.T__39):
+            if not(_la==DecafParser.T__36 or _la==DecafParser.T__37):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)

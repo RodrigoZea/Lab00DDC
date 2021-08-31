@@ -84,7 +84,7 @@ expression
     | expression arith_op_first expression #expr_arith1 // ||
     ;
 
-methodCall: ID '(' (expression (',' expression)?)* ')';
+methodCall: ID '(' (expression (',' expression)*)? ')';
 
 // Operaciones
 // Divididas por nivel de precedencia

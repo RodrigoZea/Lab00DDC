@@ -38,9 +38,17 @@ def run_antlr():
         return
 
     label_errors.config(text="")
-    errors = check(filepath)
     window.title(f"Decaf Editor - Checking {filepath}")
-    label_errors.config(text=errors)
+
+
+    errors = check(filepath)
+    n = len(errors)
+
+    element = ''
+    for i in range(n):
+        element = element + errors[i]+'\n'
+
+    label_errors.config(text=element)
 
 window = tk.Tk()
 window.title("Decaf Editor")
