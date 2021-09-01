@@ -382,45 +382,26 @@ class DecafPrinter(DecafListener):
         self.nodeTypes[ctx] = 'boolean'
 
     def exitExpr_loc(self, ctx: DecafParser.Expr_locContext):
-        print("exitExpr: ", ctx.getText())
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
     
-
-        
     def exitLocation(self, ctx: DecafParser.LocationContext):
         myvar = None
-
-        print("Entering exitLocation with: ", ctx.getText())
 
         if (ctx.location() != None):
             if self.structStack != []:
                 currentTable = self.structStack.pop()
-
-                
-                print(currentTable.structMembers)
-                print(ctx.getText())
-
                 myvar = currentTable.structMembers[ctx.getChild(0).getText()]
-
                 self.nodeTypes[ctx] = self.nodeTypes[ctx.location()]
-                print("exitLoc: ", ctx.getText())
             else:
                 myvar = self.lookupVarInSymbolTable(ctx.getChild(0).getText(), self.currentScope)
                 #structToUse = self.searchStructMember(structVarType.varType)
-
                 self.nodeTypes[ctx] = self.nodeTypes[ctx.location()]
         elif (type(ctx.parentCtx) == DecafParser.LocationContext and ctx.location() == None):
             if self.structStack != []:
                 currentTable = self.structStack.pop()
-
-                print(currentTable.structMembers)
-                print(ctx.getChild(0).getText())
-
                 myvar = currentTable.structMembers[ctx.getChild(0).getText()]
-
                 self.nodeTypes[ctx] = myvar.varType
-                print("exitLoc: ", ctx.getText())
-    
+
         else:
             myvar = self.lookupVarInSymbolTable(ctx.getChild(0).getText(), self.currentScope)
             if (myvar != None):
