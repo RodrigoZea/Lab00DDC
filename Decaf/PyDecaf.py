@@ -18,7 +18,7 @@ class VarSymbolTableItem():
 
     scope: scope it belongs to. (CURRENTLY OMMITED)
     """
-    def __init__(self, varId, varType, varContext, num, size):
+    def __init__(self, varId, varType, varContext, num, size, isArray):
         self.varId = varId 
         self.varType = varType
         self.value = None
@@ -26,6 +26,7 @@ class VarSymbolTableItem():
         self.size = size
         self.offset = 0
         self.varContext = varContext
+        self.isArray = isArray
 
 class StructSymbolTableItem():
     def __init__(self, structId, structMembers):
@@ -51,6 +52,8 @@ class DecafPrinter(DecafListener):
         self.nodeTypes = {}
         self.mainFound = False
         self.structToUse = None
+        self.structStack = []
+
 
         # Symbol table related
         self.currentMethodName = ""
@@ -71,8 +74,10 @@ class DecafPrinter(DecafListener):
     # Listener override methods
     def enterVarDeclaration(self, ctx: DecafParser.VarDeclarationContext):
         value = None
+        isArray = False
         if (ctx.NUM() != None):
             value = ctx.getChild(3).getText()
+            isArray = True
 
             if (int(value) <= 0):
                 self.nodeTypes[ctx] = 'error'
@@ -87,7 +92,7 @@ class DecafPrinter(DecafListener):
 
         if firstChild == "struct":
             structId = parentCtx.getChild(1).getText()
-            added = self.addVarToStruct(structId, varType, varId, "blockVar", value)
+            added = self.addVarToStruct(structId, varType, varId, "blockVar", value, isArray)
 
             if (added):
                 self.nodeTypes[ctx] = 'void'
@@ -95,7 +100,7 @@ class DecafPrinter(DecafListener):
                 self.nodeTypes[ctx] = 'error'
                 self.addError(ctx.start.line, "Failed to add variable to struct, variable already exists.")
         else:
-            added = self.addVarToSymbolTable(varType, varId, "blockVar", value)
+            added = self.addVarToSymbolTable(varType, varId, "blockVar", value, isArray)
 
             if (added):
                 self.nodeTypes[ctx] = 'void'
@@ -133,17 +138,19 @@ class DecafPrinter(DecafListener):
         # Add to symbol table!
         added = self.addScopeToSymbolTable(self.pastScope)
 
-        # TODO: Check weird error with not adding scope
         if (added):
             self.nodeTypes[ctx] = 'void'
 
     def enterParameter(self, ctx: DecafParser.ParameterContext):
+        isArray = False
+        if (len(ctx.children) > 2): isArray=True
+
         paramType = ctx.getChild(0).getText()
 
         if paramType != 'void':
             paramId = ctx.getChild(1).getText()
 
-            added = self.addVarToSymbolTable(paramType, paramId, "param", None)
+            added = self.addVarToSymbolTable(paramType, paramId, "param", None, isArray)
             if (added):
                 self.nodeTypes[ctx] = 'void'
             else:
@@ -156,18 +163,17 @@ class DecafPrinter(DecafListener):
         self.addStructToSymbolTable(structId)
 
     def enterLocation(self, ctx: DecafParser.LocationContext):
-        anotherLocation = False
-        for child in ctx.children:
-            if type(child) == DecafParser.LocationContext:
-                anotherLocation = True
-
-        if (type(ctx.parentCtx) == DecafParser.LocationContext and anotherLocation):
-            newStructToUse = self.structToUse.structMembers[ctx.getChild(0).getText()]
-            self.structToUse = self.searchStructMember(newStructToUse.varType)
-        elif (ctx.location()):
+        if (ctx.location()):
             varId = ctx.getChild(0).getText()
-            structVarType = self.lookupVarInSymbolTable(varId, self.currentScope)
-            self.structToUse = self.searchStructMember(structVarType.varType)
+
+            if (self.structStack == []):
+                structVarType = self.lookupVarInSymbolTable(varId, self.currentScope)
+                structToUse = self.searchStructMember(structVarType.varType)
+                self.structStack.append(structToUse)
+            else:
+                structVarType = self.structStack[-1].structMembers[varId]
+                structToUse = self.searchStructMember(structVarType.varType)
+                self.structStack.append(structToUse)
 
     # ----------------------------------------------------------------------
     # Exit
@@ -376,11 +382,53 @@ class DecafPrinter(DecafListener):
         self.nodeTypes[ctx] = 'boolean'
 
     def exitExpr_loc(self, ctx: DecafParser.Expr_locContext):
+        print("exitExpr: ", ctx.getText())
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
     
 
         
     def exitLocation(self, ctx: DecafParser.LocationContext):
+        myvar = None
+
+        print("Entering exitLocation with: ", ctx.getText())
+
+        if (ctx.location() != None):
+            if self.structStack != []:
+                currentTable = self.structStack.pop()
+
+                
+                print(currentTable.structMembers)
+                print(ctx.getText())
+
+                myvar = currentTable.structMembers[ctx.getChild(0).getText()]
+
+                self.nodeTypes[ctx] = self.nodeTypes[ctx.location()]
+                print("exitLoc: ", ctx.getText())
+            else:
+                myvar = self.lookupVarInSymbolTable(ctx.getChild(0).getText(), self.currentScope)
+                #structToUse = self.searchStructMember(structVarType.varType)
+
+                self.nodeTypes[ctx] = self.nodeTypes[ctx.location()]
+        elif (type(ctx.parentCtx) == DecafParser.LocationContext and ctx.location() == None):
+            if self.structStack != []:
+                currentTable = self.structStack.pop()
+
+                print(currentTable.structMembers)
+                print(ctx.getChild(0).getText())
+
+                myvar = currentTable.structMembers[ctx.getChild(0).getText()]
+
+                self.nodeTypes[ctx] = myvar.varType
+                print("exitLoc: ", ctx.getText())
+    
+        else:
+            myvar = self.lookupVarInSymbolTable(ctx.getChild(0).getText(), self.currentScope)
+            if (myvar != None):
+                self.nodeTypes[ctx] = myvar.varType
+            else:
+                self.nodeTypes[ctx] = 'error'
+                self.addError(ctx.start.line, "Variable hasn't been defined yet.")   
+
         if (ctx.expression()):
             if (self.nodeTypes[ctx.expression()] != 'int'):
                 self.nodeTypes[ctx] = 'error'
@@ -390,24 +438,10 @@ class DecafPrinter(DecafListener):
                 self.nodeTypes[ctx] = 'error'
                 self.addError(ctx.start.line, "Array index must be a non-negative number.")  
 
-        if (type(ctx.parentCtx) == DecafParser.LocationContext and ctx.location() != None):
-            if self.structToUse != None:
-                self.nodeTypes[ctx] = self.nodeTypes[ctx.location()]
-        elif (type(ctx.parentCtx) == DecafParser.LocationContext):
-            if self.structToUse != None:
-                myvar = self.structToUse.structMembers[ctx.getChild(0).getText()]
-                if (myvar != None):
-                    self.nodeTypes[ctx] = myvar.varType
-        elif (ctx.location() != None):
-            if self.structToUse != None:
-                self.nodeTypes[ctx] = self.nodeTypes[ctx.location()]
-        else:
-            myvar = self.lookupVarInSymbolTable(ctx.getChild(0).getText(), self.currentScope)
             if (myvar != None):
-                self.nodeTypes[ctx] = myvar.varType
-            else:
-                self.nodeTypes[ctx] = 'error'
-                self.addError(ctx.start.line, "Variable hasn't been defined yet.")   
+                if(not myvar.isArray):
+                    self.nodeTypes[ctx] = 'error'
+                    self.addError(ctx.start.line, "Var is not an array.")  
 
 
     def exitVarDeclaration(self, ctx: DecafParser.VarDeclarationContext):
@@ -489,7 +523,7 @@ class DecafPrinter(DecafListener):
 
         return canAdd
 
-    def addVarToSymbolTable(self, varType, varId, varContext, num):
+    def addVarToSymbolTable(self, varType, varId, varContext, num, isArray):
         if (num == None): num = 1
         canAdd = False
         currentVarSize = self.calculateSize(varType, num)
@@ -498,7 +532,7 @@ class DecafPrinter(DecafListener):
         tempSymbolTable = self.scopeDictionary.get(self.currentScope).symbolTable
 
         if varId not in tempSymbolTable:
-            tempSymbolTable[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize)
+            tempSymbolTable[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize, isArray)
             canAdd = True
         else:
             canAdd = False
@@ -565,7 +599,7 @@ class DecafPrinter(DecafListener):
         if structId not in self.structDictionary:
             self.structDictionary[structId] = StructSymbolTableItem(structId=structId, structMembers={})
 
-    def addVarToStruct(self, structId, varType, varId, varContext, num):
+    def addVarToStruct(self, structId, varType, varId, varContext, num, isArray):
         if (num == None): num = 1
         canAdd = False
         currentVarSize = self.calculateSize(varType, num)
@@ -575,7 +609,7 @@ class DecafPrinter(DecafListener):
         tempStructSize = self.structDictionary.get(structId).size
 
         if varId not in tempStructMembers:
-            tempStructMembers[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize)
+            tempStructMembers[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize, isArray)
             tempStructSize += currentVarSize
             canAdd = True
         else:
@@ -603,14 +637,14 @@ def check(argv):
     walker = ParseTreeWalker()
     walker.walk(printer, tree)
 
-    """
+
     for c, v in printer.scopeDictionary.items():
         print("KEY: ", c)
         print("     Parent scope: ", v.parentKey)
         print("     Return type: ", v.returnType)
         print("     Items: ")
         for var, varItem in v.symbolTable.items():
-            print("         VarId: " + var + ", VarType: " + varItem.varType + ", Num: " + str(varItem.num) + ", Size: " + str(varItem.size))
+            print("         VarId: " + var + ", VarType: " + varItem.varType + ", Num: " + str(varItem.num) + ", Size: " + str(varItem.size) + ", isArray: " + str(varItem.isArray))
 
     print("--------------------------------------------")
 
@@ -618,8 +652,8 @@ def check(argv):
         print("STRUCT: ", c)
         print("     Items: ")
         for var, varItem in v.structMembers.items():
-            print("         VarId: " + var + ", VarType: " + varItem.varType + ", Num: " + str(varItem.num) + ", Size: " + str(varItem.size))
-    """
+            print("         VarId: " + var + ", VarType: " + varItem.varType + ", Num: " + str(varItem.num) + ", Size: " + str(varItem.size) + ", isArray: " + str(varItem.isArray))
+
     for error in printer.errorList:
         print(error)
 
@@ -637,6 +671,4 @@ def traverse(tree, rule_names, indent = 0):
             for child in tree.children:
                 traverse(child, rule_names, indent + 1)
 
-if __name__ == '__main__':
-    main(sys.argv)
 

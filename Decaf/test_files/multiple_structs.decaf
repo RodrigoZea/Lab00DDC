@@ -1,0 +1,63 @@
+class Program
+{
+
+struct C
+{
+	int d;
+};
+
+struct A
+{
+	int a;
+    struct C idk;
+};
+
+struct B
+{
+	int b[5];
+	struct A c;
+};
+
+
+
+struct A y;
+struct A z;
+
+
+void main(void)
+{
+	struct B y[1];
+	int i;
+	int j;
+	int k;	
+
+
+	i = 0;
+	j=0;
+
+    i = y[0].c.idk.d
+	z.a = 3;	
+
+    
+
+	while(i<=10)
+	{
+		int aaaa;
+		y[j].b[0]=2;
+		
+		if(y[j].b[0]==5)
+		{
+			y[j].b[0]=z.a;
+			k=3;
+		}		
+
+		y[j].c[0].a=1;
+		i = i + 1;
+	}
+	return;
+}
+
+
+
+
+}

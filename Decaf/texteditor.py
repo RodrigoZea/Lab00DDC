@@ -37,9 +37,13 @@ def run_antlr():
     if not filepath:
         return
 
+    txt_edit.delete(1.0, tk.END)
+    with open(filepath, "r") as input_file:
+        text = input_file.read()
+        txt_edit.insert(tk.END, text)
+
     label_errors.config(text="")
     window.title(f"Decaf Editor - Checking {filepath}")
-
 
     errors = check(filepath)
     n = len(errors)
@@ -47,6 +51,8 @@ def run_antlr():
     element = ''
     for i in range(n):
         element = element + errors[i]+'\n'
+
+    if (n == 0): element = "No errors!"
 
     label_errors.config(text=element)
 
