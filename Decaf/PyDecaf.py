@@ -394,18 +394,40 @@ class DecafPrinter(DecafListener):
         if (ctx.location() != None):
             if self.structStack != []:
                 currentTable = self.structStack.pop()
-                myvar = currentTable.structMembers[ctx.getChild(0).getText()]
-                self.nodeTypes[ctx] = self.nodeTypes[ctx.location()]
+
+                if (currentTable != None):
+                    myvar = currentTable.structMembers[ctx.getChild(0).getText()]
+                    if (myvar != None):
+                        self.nodeTypes[ctx] = self.nodeTypes[ctx.location()]
+                    else:
+                        self.nodeTypes[ctx] = 'error'
+                        self.addError(ctx.start.line, "Property not found on struct.")
+                else:
+                    self.nodeTypes[ctx] = 'error'
+                    self.addError(ctx.start.line, "Property is not an struct.")
             else:
                 myvar = self.lookupVarInSymbolTable(ctx.getChild(0).getText(), self.currentScope)
-                #structToUse = self.searchStructMember(structVarType.varType)
-                self.nodeTypes[ctx] = self.nodeTypes[ctx.location()]
+
+                if (myvar != None):
+                    #structToUse = self.searchStructMember(structVarType.varType)
+                    self.nodeTypes[ctx] = self.nodeTypes[ctx.location()]
+                else:
+                    self.nodeTypes[ctx] = 'error'
+                    self.addError(ctx.start.line, "Undefined.")
         elif (type(ctx.parentCtx) == DecafParser.LocationContext and ctx.location() == None):
             if self.structStack != []:
                 currentTable = self.structStack.pop()
-                myvar = currentTable.structMembers[ctx.getChild(0).getText()]
-                self.nodeTypes[ctx] = myvar.varType
 
+                if (currentTable != None):
+                    myvar = currentTable.structMembers[ctx.getChild(0).getText()]
+                    if (myvar != None):                      
+                        self.nodeTypes[ctx] = myvar.varType        
+                    else:
+                        self.nodeTypes[ctx] = 'error'
+                        self.addError(ctx.start.line, "Property not found on struct.")                                    
+                else:
+                    self.nodeTypes[ctx] = 'error'
+                    self.addError(ctx.start.line, "Parent struct doesn't have this property.")
         else:
             myvar = self.lookupVarInSymbolTable(ctx.getChild(0).getText(), self.currentScope)
             if (myvar != None):

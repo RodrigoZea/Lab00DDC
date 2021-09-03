@@ -1,0 +1,42 @@
+class Program
+{
+struct MyTest
+{
+	int n;
+	char b;
+	int c[10];
+};
+
+struct OtherTest
+{
+	struct MyTest T[10];
+	int n;
+};
+
+struct FinalTest
+{
+	int n;
+	char b;
+	int c[10];
+	struct MyTest U[10];
+	struct OtherTest T[10];
+};
+
+
+
+
+void main()
+{
+	struct OtherTest M[5];
+	struct MyTest N;
+	struct FinalTest O[5];
+	int i;
+	i = 1;	
+	M[i].T[1].n = 2;
+	M[i].n.n = 2;
+	N.b = 1;
+	O.T[2].T[-2].c = 1;
+	O.T[2].T[1].c = 1;
+}
+
+}
