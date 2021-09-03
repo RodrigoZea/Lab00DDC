@@ -408,7 +408,8 @@ class DecafPrinter(DecafListener):
                 self.nodeTypes[ctx] = myvar.varType
             else:
                 self.nodeTypes[ctx] = 'error'
-                self.addError(ctx.start.line, "Variable hasn't been defined yet.")   
+                errorMsgWithVar = "Var " + ctx.getChild(0).getText() + "hasn't been defined yet"
+                self.addError(ctx.start.line, errorMsgWithVar)   
 
         if (ctx.expression()):
             if (self.nodeTypes[ctx.expression()] != 'int'):
@@ -422,8 +423,14 @@ class DecafPrinter(DecafListener):
             if (myvar != None):
                 if(not myvar.isArray):
                     self.nodeTypes[ctx] = 'error'
-                    self.addError(ctx.start.line, "Var is not an array.")  
-
+                    errorMsgWithVar = "Var " + myvar.varId + " is not an array."
+                    self.addError(ctx.start.line, errorMsgWithVar)  
+        else:
+            if (myvar != None):
+                if(myvar.isArray):
+                    self.nodeTypes[ctx] = 'error'
+                    errorMsgWithVar = "Var " + myvar.varId + " is an array. An index should be stated."
+                    self.addError(ctx.start.line, errorMsgWithVar)  
 
     def exitVarDeclaration(self, ctx: DecafParser.VarDeclarationContext):
         varType = ctx.getChild(0).getText()
@@ -619,6 +626,9 @@ def check(argv):
     walker.walk(printer, tree)
 
 
+    print("--------------------------------------------")
+    print("SYMBOL TABLE \n")
+    
     for c, v in printer.scopeDictionary.items():
         print("KEY: ", c)
         print("     Parent scope: ", v.parentKey)
@@ -628,12 +638,15 @@ def check(argv):
             print("         VarId: " + var + ", VarType: " + varItem.varType + ", Num: " + str(varItem.num) + ", Size: " + str(varItem.size) + ", isArray: " + str(varItem.isArray))
 
     print("--------------------------------------------")
+    print("STRUCT INFORMATION \n")
 
     for c, v in printer.structDictionary.items():
         print("STRUCT: ", c)
         print("     Items: ")
         for var, varItem in v.structMembers.items():
             print("         VarId: " + var + ", VarType: " + varItem.varType + ", Num: " + str(varItem.num) + ", Size: " + str(varItem.size) + ", isArray: " + str(varItem.isArray))
+
+    print("--------------------------------------------")
 
     for error in printer.errorList:
         print(error)

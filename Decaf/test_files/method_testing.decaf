@@ -1,0 +1,16 @@
+class Program
+{
+
+int randomCalc(void)
+{
+    return 1;
+}
+
+void main(void)
+{
+
+
+}
+
+
+}
