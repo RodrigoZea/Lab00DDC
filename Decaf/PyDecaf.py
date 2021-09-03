@@ -154,7 +154,6 @@ class DecafPrinter(DecafListener):
             if (added):
                 self.nodeTypes[ctx] = 'void'
             else:
-                # TODO: Add error
                 self.nodeTypes[ctx] = 'error'
                 self.addError(ctx.start.line, "Failed to add parameter to symbol table, there's already an existing parameter with that name.")
 
@@ -187,6 +186,10 @@ class DecafPrinter(DecafListener):
 
         self.enterScope("global")
 
+    def exitBlock(self, ctx: DecafParser.BlockContext):
+        currentBlockObj = self.lookupMethodInSymbolTable(self.currentScope)
+        self.enterScope(currentBlockObj.parentKey)
+
     def exitMethodCall(self, ctx: DecafParser.MethodCallContext):
         #self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
         methodName = ctx.getChild(0).getText()
@@ -202,8 +205,6 @@ class DecafPrinter(DecafListener):
                     if (ctx.getChild(i).getText() != ","):
                         methodCallTypes.append(self.nodeTypes[ctx.getChild(i)])
 
-
-            # TODO: Check with more than 1 arg and no args
             paramsEquality = self.compareParameters(methodObj, args, methodCallTypes)
 
             if paramsEquality:
@@ -214,6 +215,9 @@ class DecafPrinter(DecafListener):
         else:
             self.nodeTypes[ctx] = 'error'
             self.addError(ctx.start.line, "Method doesn't exist in symbol table or hasn't been declared yet.")
+
+    def exitStat_mcall(self, ctx: DecafParser.Stat_mcallContext):
+        self.nodeTypes[ctx] = self.nodeTypes[ctx.methodCall()]
         
     def exitProgram(self, ctx: DecafParser.ProgramContext):
         if (not self.mainFound):

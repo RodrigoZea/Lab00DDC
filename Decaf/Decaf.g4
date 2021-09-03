@@ -39,7 +39,6 @@ varType
     | 'boolean' 
     | 'struct' ID 
     | structDeclaration 
-    | 'void' 
     ;
 methodDeclaration: methodType ID '(' (parameter (',' parameter)*)* ')' block;
 methodType
