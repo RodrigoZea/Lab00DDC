@@ -3,6 +3,9 @@ import os
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 from PyDecaf import check
 
+filepath_copy = None
+default_dir = 'D:\\UVG\\5toAno\\comp2\\Lab00DDC\\Decaf\\test_files'
+
 def open_file():
     """Open a file for editing."""
     filepath = askopenfilename(
@@ -10,6 +13,9 @@ def open_file():
     )
     if not filepath:
         return
+
+    filepath_copy = filepath
+
     txt_edit.delete(1.0, tk.END)
     with open(filepath, "r") as input_file:
         text = input_file.read()
@@ -24,23 +30,25 @@ def save_file():
     )
     if not filepath:
         return
+
+    filepath_copy = filepath
+
     with open(filepath, "w") as output_file:
         text = txt_edit.get(1.0, tk.END)
         output_file.write(text)
     window.title(f"Decaf Editor - {filepath}")
 
 def run_antlr():
-    """Open a file for editing."""
-    filepath = askopenfilename(
-        filetypes=[("Decaf", "*.decaf")]
-    )
-    if not filepath:
-        return
+    """Run a decaf file and perform a lexical analysis """
+    # Check if it already has a filepath
+    # If it doesnt have a filepath, save with temp.decaf name
+    # Overwrite either way
+    if (filepath_copy == None):
+        filepath = default_dir + "\\temp.decaf"
 
-    txt_edit.delete(1.0, tk.END)
-    with open(filepath, "r") as input_file:
-        text = input_file.read()
-        txt_edit.insert(tk.END, text)
+    with open(filepath, "w") as output_file:
+        text = txt_edit.get(1.0, tk.END)
+        output_file.write(text)
 
     label_errors.config(text="")
     window.title(f"Decaf Editor - Checking {filepath}")
@@ -49,18 +57,19 @@ def run_antlr():
     n = len(errors)
 
     element = ''
-    for i in range(n):
-        element = element + errors[i]+'\n'
+    for key, value in errors.items():
+        element = element + key[1] + " at line (" + str(key[0]) + "): " + value +'\n'
 
     if (n == 0): element = "No errors!"
 
     label_errors.config(text=element)
+    label_errors.grid(row=0, column=2, sticky="nw", padx=5, pady=5)
 
 window = tk.Tk()
 window.title("Decaf Editor")
 window.rowconfigure(0, minsize=800, weight=1)
 window.columnconfigure(1, minsize=800, weight=1)
-window.columnconfigure(2, minsize=400, weight=1)
+window.columnconfigure(2, minsize=700, weight=1)
 
 txt_edit = tk.Text(window)
 fr_buttons = tk.Frame(window, relief=tk.RAISED, bd=2)

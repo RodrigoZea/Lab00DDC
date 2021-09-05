@@ -6,7 +6,6 @@ from DecafLexer import DecafLexer
 from DecafParser import DecafParser
 from DecafListener import DecafListener
 
-# Stack
 class VarSymbolTableItem():
     """
     varId: variables name.
@@ -45,7 +44,7 @@ class SymbolTableItem():
 class DecafPrinter(DecafListener):
     def __init__(self) -> None:
         # Flags or misc
-        self.errorList = []
+        self.errorDictionary = {}
         self.primitives = ('int', 'char', 'boolean', 'struct', 'void')
         self.typeSizes = {'int':4, 'char':1, 'boolean':1}
         self.startingValues = {'int': '0', 'boolean': 'false', 'char': 'a'}
@@ -81,7 +80,7 @@ class DecafPrinter(DecafListener):
 
             if (int(value) <= 0):
                 self.nodeTypes[ctx] = 'error'
-                self.addError(ctx.start.line, "Array size must be bigger than 0")
+                self.addError((ctx.start.line, "arrayError"), "Array size must be bigger than 0")
                 return
 
         parentCtx = ctx.parentCtx
@@ -98,7 +97,8 @@ class DecafPrinter(DecafListener):
                 self.nodeTypes[ctx] = 'void'
             else:
                 self.nodeTypes[ctx] = 'error'
-                self.addError(ctx.start.line, "Failed to add variable to struct, variable already exists.")
+                errorMsg = "Failed to add variable " + varId + " to struct, variable already exists."
+                self.addError((ctx.start.line, "existingValue"), errorMsg)
         else:
             added = self.addVarToSymbolTable(varType, varId, "blockVar", value, isArray)
 
@@ -106,7 +106,8 @@ class DecafPrinter(DecafListener):
                 self.nodeTypes[ctx] = 'void'
             else:
                 self.nodeTypes[ctx] = 'error'
-                self.addError(ctx.start.line, "Failed to add variable to scope, variable already exists.")
+                errorMsg = "Failed to add variable " + varId + " to scope, variable already exists."
+                self.addError((ctx.start.line, "existingValue"), errorMsg)
 
  
     def enterMethodDeclaration(self, ctx: DecafParser.MethodDeclarationContext):
@@ -123,7 +124,8 @@ class DecafPrinter(DecafListener):
             self.nodeTypes[ctx] = 'void'
         else:
             self.nodeTypes[ctx] = 'error'
-            self.addError(ctx.start.line, "Failed to add method to symbol table, there's already a method with that name.")
+            errorMsg = "Failed to add method " + methodName + " to symbol table, there's already a method with that name."
+            self.addError((ctx.start.line, "existingMethod"), errorMsg)
 
     def enterBlock(self, ctx: DecafParser.BlockContext):
         parentCtx = ctx.parentCtx
@@ -155,7 +157,8 @@ class DecafPrinter(DecafListener):
                 self.nodeTypes[ctx] = 'void'
             else:
                 self.nodeTypes[ctx] = 'error'
-                self.addError(ctx.start.line, "Failed to add parameter to symbol table, there's already an existing parameter with that name.")
+                errorMsg = "Failed to add parameter " + paramId + " to symbol table, there's already an existing parameter with that name."
+                self.addError((ctx.start.line, "existingValue"), errorMsg)
 
     def enterStructDeclaration(self, ctx: DecafParser.StructDeclarationContext):
         structId = ctx.getChild(1).getText()
@@ -211,10 +214,10 @@ class DecafPrinter(DecafListener):
                 self.nodeTypes[ctx] = methodObj.returnType
             else:
                 self.nodeTypes[ctx] = 'error'
-                self.addError(ctx.start.line, "Failed to call method, parameters don't match (either in type or order is incorrect)")
+                self.addError((ctx.start.line, "paramNoMatch"), "Failed to call method, parameters don't match (either in type or order is incorrect)")
         else:
             self.nodeTypes[ctx] = 'error'
-            self.addError(ctx.start.line, "Method doesn't exist in symbol table or hasn't been declared yet.")
+            self.addError((ctx.start.line, "noExistingMethod"), "Method doesn't exist in symbol table or hasn't been declared yet.")
 
     def exitStat_mcall(self, ctx: DecafParser.Stat_mcallContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.methodCall()]
@@ -222,7 +225,7 @@ class DecafPrinter(DecafListener):
     def exitProgram(self, ctx: DecafParser.ProgramContext):
         if (not self.mainFound):
             self.nodeTypes[ctx] = 'error'
-            self.addError(ctx.start.line, "Main method is not declared!")
+            self.addError((ctx.start.line, "mainNotFound"), "Main method is not declared!")
 
     def exitStat_return(self, ctx: DecafParser.StatementContext):
         # Children structure
@@ -240,10 +243,10 @@ class DecafPrinter(DecafListener):
                     self.nodeTypes[ctx] = 'void'
                 elif(methodType in self.primitives):
                     self.nodeTypes[ctx] = 'error'
-                    self.addError(ctx.start.line, "Typed method expecting a return value.")
+                    self.addError((ctx.start.line, "untypedMethod"), "Typed method expecting a return value.")
                 else:
                     self.nodeTypes[ctx] = 'error' 
-                    self.addError(ctx.start.line, "Method type is not accepted by language.")     
+                    self.addError((ctx.start.line, "unacceptedMethodType"), "Method type is not accepted by language.")
             else:
                 if (methodType in self.primitives):
                     exprType = self.nodeTypes[expressionOom.getChild(0)]
@@ -252,10 +255,10 @@ class DecafPrinter(DecafListener):
                         self.nodeTypes[ctx] = 'void'
                     else:
                         self.nodeTypes[ctx] = 'error'
-                        self.addError(ctx.start.line, "Return statement type doesn't match with method type.")
+                        self.addError((ctx.start.line, "returnNotMatching"), "Return statement type doesn't match with method type.")
                 else:
                     self.nodeTypes[ctx] = 'error' 
-                    self.addError(ctx.start.line, "Method type is not accepted by language.")                      
+                    self.addError((ctx.start.line, "unacceptedMethodType"), "Method type is not accepted by language.")                
 
     # NOTE: Se debe de saltar un nodo siempre porque no se está tomando en cuenta el expression padre, se debe obtener el t ipo de los literals.
     # * / %
@@ -270,7 +273,7 @@ class DecafPrinter(DecafListener):
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
-            self.addError(ctx.start.line, "Operation expected two integer typed operators.")     
+            self.addError((ctx.start.line, "typingNoMatch"), "Operation expected two integer typed operators.")  
     # + -
     def exitExpr_arith4(self, ctx: DecafParser.Expr_arith5Context):
         op1 = ctx.getChild(0)
@@ -283,7 +286,7 @@ class DecafPrinter(DecafListener):
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
-            self.addError(ctx.start.line, "Operation expected two integer typed operators.")    
+            self.addError((ctx.start.line, "typingNoMatch"), "Operation expected two integer typed operators.")    
 
     # eq_op: == != | rel_op: < <= > >=
     def exitExpr_arith3(self, ctx: DecafParser.Expr_arith3Context):
@@ -299,7 +302,7 @@ class DecafPrinter(DecafListener):
             else:
                 # Si no pues es un error.
                 self.nodeTypes[ctx] = 'error'
-                self.addError(ctx.start.line, "Operation expected two integer typed operators.")    
+                self.addError((ctx.start.line, "typingNoMatch"), "Operation expected two integer typed operators.")
         elif (symbol == "==" or symbol == "!="):
             allowed = ('int', 'char', 'boolean')
             type1 = self.nodeTypes[op1] 
@@ -313,11 +316,11 @@ class DecafPrinter(DecafListener):
                 else:
                     # Si no pues es un error.
                     self.nodeTypes[ctx] = 'error'
-                    self.addError(ctx.start.line, "Operation expected two operators with the same type.")    
+                    self.addError((ctx.start.line, "typingNoMatch"), "Operation expected two integer typed operators.")  
             # Si no está entre los permitidos, es error
             else:
                 self.nodeTypes[ctx] = 'error'
-                self.addError(ctx.start.line, "One of the operators has a type not accepted by the language.")    
+                self.addError((ctx.start.line, "typingNoMatch"), "One of the operators has a type not accepted by the language.")      
 
     # &&
     def exitArith_op_second(self, ctx: DecafParser.Arith_op_secondContext):
@@ -330,8 +333,8 @@ class DecafPrinter(DecafListener):
             self.nodeTypes[ctx] = 'boolean'
         else:
             # Si no pues es un error.
-            self.nodeTypes[ctx] = 'error'
-            self.addError(ctx.start.line, "Operation expected two boolean typed operators.")    
+            self.nodeTypes[ctx] = 'error' 
+            self.addError((ctx.start.line, "typingNoMatch"), "Operation expected two boolean typed operators.")   
 
     # ||
     def exitArith_op_first(self, ctx: DecafParser.Arith_op_firstContext):
@@ -345,7 +348,7 @@ class DecafPrinter(DecafListener):
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
-            self.addError(ctx.start.line, "Operation expected two boolean typed operators.")   
+            self.addError((ctx.start.line, "typingNoMatch"), "Operation expected two boolean typed operators.")
 
     # !
     def exitExpr_not(self, ctx: DecafParser.Expr_notContext):
@@ -358,7 +361,7 @@ class DecafPrinter(DecafListener):
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
-            self.addError(ctx.start.line, "!: Operation expected a boolean typed operator.")   
+            self.addError((ctx.start.line, "typingNoMatch"), "!: Operation expected a boolean typed operator.")
 
 
     def exitExpr_minus(self, ctx: DecafParser.Expr_minusContext):
@@ -371,7 +374,7 @@ class DecafPrinter(DecafListener):
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
-            self.addError(ctx.start.line, "-: Operation expected an int typed operator.")   
+            self.addError((ctx.start.line, "typingNoMatch"), "-: Operation expected an int typed operator.")
 
     def exitExpr_parenthesis(self, ctx: DecafParser.Expr_parenthesisContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.expression()]
@@ -401,10 +404,11 @@ class DecafPrinter(DecafListener):
                         self.nodeTypes[ctx] = self.nodeTypes[ctx.location()]
                     else:
                         self.nodeTypes[ctx] = 'error'
-                        self.addError(ctx.start.line, "Property not found on struct.")
+                        errorMsg = "Property " + ctx.getChild(0).getText() + " not found on struct."
+                        self.addError((ctx.start.line, "propNotFound"), errorMsg)
                 else:
                     self.nodeTypes[ctx] = 'error'
-                    self.addError(ctx.start.line, "Property is not an struct.")
+                    self.addError((ctx.start.line, "propNoStruct"), "Property is not an struct.")
             else:
                 myvar = self.lookupVarInSymbolTable(ctx.getChild(0).getText(), self.currentScope)
 
@@ -413,7 +417,7 @@ class DecafPrinter(DecafListener):
                     self.nodeTypes[ctx] = self.nodeTypes[ctx.location()]
                 else:
                     self.nodeTypes[ctx] = 'error'
-                    self.addError(ctx.start.line, "Undefined.")
+                    self.addError((ctx.start.line, "unreachable"), "Undefined.")
         elif (type(ctx.parentCtx) == DecafParser.LocationContext and ctx.location() == None):
             if self.structStack != []:
                 currentTable = self.structStack.pop()
@@ -424,39 +428,40 @@ class DecafPrinter(DecafListener):
                         self.nodeTypes[ctx] = myvar.varType        
                     else:
                         self.nodeTypes[ctx] = 'error'
-                        self.addError(ctx.start.line, "Property not found on struct.")                                    
+                        errorMsg = "Property " + ctx.getChild(0).getText() + " not found on struct."
+                        self.addError((ctx.start.line, "propNotFound"), errorMsg)                                
                 else:
                     self.nodeTypes[ctx] = 'error'
-                    self.addError(ctx.start.line, "Parent struct doesn't have this property.")
+                    self.addError((ctx.start.line, "propNoStruct"), "Parent struct doesn't have this property.")
         else:
             myvar = self.lookupVarInSymbolTable(ctx.getChild(0).getText(), self.currentScope)
             if (myvar != None):
                 self.nodeTypes[ctx] = myvar.varType
             else:
                 self.nodeTypes[ctx] = 'error'
-                errorMsgWithVar = "Var " + ctx.getChild(0).getText() + "hasn't been defined yet"
-                self.addError(ctx.start.line, errorMsgWithVar)   
-
+                errorMsgWithVar = "Var " + ctx.getChild(0).getText() + " hasn't been defined yet"
+                self.addError((ctx.start.line, "notExistingVar"), errorMsgWithVar)
+        # ------------------------------------------------------------------------------------------------------------
         if (ctx.expression()):
             if (self.nodeTypes[ctx.expression()] != 'int'):
                 self.nodeTypes[ctx] = 'error'
-                self.addError(ctx.start.line, "<expr> in ID[<expr>] must be of type int.")  
-
+                errorMsg = "<expr> in " + ctx.ID().getText() +  " [<expr>] must be of type int."
+                self.addError((ctx.start.line, "arrayError"), errorMsg)  
             if (type(ctx.expression()) == DecafParser.Expr_minusContext):
                 self.nodeTypes[ctx] = 'error'
-                self.addError(ctx.start.line, "Array index must be a non-negative number.")  
-
+                errorMsg = "Array index of array " +  ctx.ID().getText()  + " must be a non-negative number. "
+                self.addError((ctx.start.line, "arrayError"), errorMsg) 
             if (myvar != None):
                 if(not myvar.isArray):
                     self.nodeTypes[ctx] = 'error'
                     errorMsgWithVar = "Var " + myvar.varId + " is not an array."
-                    self.addError(ctx.start.line, errorMsgWithVar)  
+                    self.addError((ctx.start.line, "noArray"), errorMsgWithVar)
         else:
             if (myvar != None):
                 if(myvar.isArray):
                     self.nodeTypes[ctx] = 'error'
                     errorMsgWithVar = "Var " + myvar.varId + " is an array. An index should be stated."
-                    self.addError(ctx.start.line, errorMsgWithVar)  
+                    self.addError((ctx.start.line, "isArray"), errorMsgWithVar)
 
     def exitVarDeclaration(self, ctx: DecafParser.VarDeclarationContext):
         varType = ctx.getChild(0).getText()
@@ -483,7 +488,7 @@ class DecafPrinter(DecafListener):
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
-            self.addError(ctx.start.line, "Assigment should be of the same type on its operands.")   
+            self.addError((ctx.start.line ,"typingNoMatch"), "Assigment should be of the same type on its operands.")
 
     def exitStat_if(self, ctx: DecafParser.Stat_ifContext):
         expression = ctx.getChild(2)
@@ -492,8 +497,8 @@ class DecafPrinter(DecafListener):
             self.nodeTypes[ctx] = 'boolean'
         else:
             # Si no pues es un error.
-            self.nodeTypes[ctx] = 'error'
-            self.addError(ctx.start.line, "if statement should be a boolean expression.")         
+            self.nodeTypes[ctx] = 'error' 
+            self.addError((ctx.start.line ,"typingNoMatch"), "if statement should be a boolean expression.") 
 
 
     # This should be exitStat_while but it was tagged incorrectly in the grammar.
@@ -505,7 +510,7 @@ class DecafPrinter(DecafListener):
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
-            self.addError(ctx.start.line, "while statement should be a boolean expression.")     
+            self.addError((ctx.start.line ,"typingNoMatch"), "while statement should be a boolean expression.")
 
     # -----------------------------------------------------------------------
     # Non override methods
@@ -520,9 +525,13 @@ class DecafPrinter(DecafListener):
         elif (varType in self.structDictionary):
             return self.structDictionary[varType].size*num
 
-    def addError(self, line, body):
-        errorMsg = "Error at line (" + str(line) + "): " + body
-        self.errorList.append(errorMsg)
+    # Expects a key (line, type) and body (string)
+    def addError(self, key, body):
+        if (key not in self.errorDictionary):
+            self.errorDictionary[key] = body 
+
+        #errorMsg = "Error at line (" + str(line) + "): " + body
+        #self.errorList.append(errorMsg)
   
     # -----------------------------------------------------------------------
     # TODO: Offsets...
@@ -674,11 +683,8 @@ def check(argv):
 
     print("--------------------------------------------")
 
-    for error in printer.errorList:
-        print(error)
-
     #traverse(tree, parser.ruleNames)
-    return printer.errorList
+    return printer.errorDictionary
 
 def traverse(tree, rule_names, indent = 0):
     if tree.getText() == "<EOF>":
