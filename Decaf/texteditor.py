@@ -3,7 +3,7 @@ import os
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 from PyDecaf import check
 
-filepath_copy = None
+filepath = None
 default_dir = 'D:\\UVG\\5toAno\\comp2\\Lab00DDC\\Decaf\\test_files'
 
 def open_file():
@@ -13,8 +13,6 @@ def open_file():
     )
     if not filepath:
         return
-
-    filepath_copy = filepath
 
     txt_edit.delete(1.0, tk.END)
     with open(filepath, "r") as input_file:
@@ -31,7 +29,7 @@ def save_file():
     if not filepath:
         return
 
-    filepath_copy = filepath
+
 
     with open(filepath, "w") as output_file:
         text = txt_edit.get(1.0, tk.END)
@@ -43,8 +41,8 @@ def run_antlr():
     # Check if it already has a filepath
     # If it doesnt have a filepath, save with temp.decaf name
     # Overwrite either way
-    if (filepath_copy == None):
-        filepath = default_dir + "\\temp.decaf"
+    #if (filepath == None):
+    filepath = default_dir + "\\temp.decaf"
 
     with open(filepath, "w") as output_file:
         text = txt_edit.get(1.0, tk.END)
@@ -64,6 +62,7 @@ def run_antlr():
 
     label_errors.config(text=element)
     label_errors.grid(row=0, column=2, sticky="nw", padx=5, pady=5)
+
 
 window = tk.Tk()
 window.title("Decaf Editor")

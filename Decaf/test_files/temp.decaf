@@ -1,36 +1,17 @@
 class Program
 {
 
-void OutputInt(int n)
-{
-
-}
-
-void Test(int b, int c, int d,int e,int f,int g,int h,int i,int j,int k,int l,int m,int n,int o,int p)
-{
-	int resultado;
-	resultado = (a/b)*c-d+e+f+g+h+i+j+k+l+m+n+o+p;
-	OutputInt(resultado);
-}
-
-int InputInt(void)
-{
-
-	return 0;
-}
 
 void main(void)
 {
-	int n;
-	int f;
-	
-	int i;
-	i = 0;
-	
-	Test(4,2,6,7,1,1,1,1,1,1,1,1,1,1,1,1);
-
+	int a;
+	int b;
+	int c;
+	a = 3;
+	b = 4;
+	c = a + b;
 }
 
-}
 
+}
 

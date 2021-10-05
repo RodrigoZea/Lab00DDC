@@ -17,13 +17,13 @@ class VarSymbolTableItem():
 
     scope: scope it belongs to. (CURRENTLY OMMITED)
     """
-    def __init__(self, varId, varType, varContext, num, size, isArray):
+    def __init__(self, varId, varType, varContext, num, size, isArray, offset):
         self.varId = varId 
         self.varType = varType
         self.value = None
         self.num = num
         self.size = size
-        self.offset = 0
+        self.offset = offset
         self.varContext = varContext
         self.isArray = isArray
 
@@ -39,6 +39,29 @@ class SymbolTableItem():
         self.returnType = returnType
         self.symbolTable = symbolTable
 
+"""
+Represents a Quad to be stored in a list.
+
+Kind of literal to the book in everything.
+    op: stores an internal code for the operator. Sometimes implicit. i.e. assignment operation.
+    arg1: stores arg1, every Quad will have an arg1.
+    arg2: stores arg2, not every operation will need to use arg2. i.e. minus or not operations.
+    result: stores the result of the operation. Some operators dont use this
+"""
+# String output?
+class QuadBucket():
+    def __init__(self, op, arg1, arg2, result, stringOutput):
+        self.op = op
+        self.arg1 = arg1
+        self.arg2 = arg2
+        self.result = result
+        self.stringOutput = stringOutput
+
+class AddrEntry():
+    def __init__(self, addr, label):
+        self.addr = addr
+        self.label = label
+
 #---------------------------------------------------------------------------------------------------
 
 class DecafPrinter(DecafListener):
@@ -47,14 +70,13 @@ class DecafPrinter(DecafListener):
         self.errorDictionary = {}
         self.primitives = ('int', 'char', 'boolean', 'struct', 'void')
         self.typeSizes = {'int':4, 'char':1, 'boolean':1}
-        self.startingValues = {'int': '0', 'boolean': 'false', 'char': 'a'}
         self.nodeTypes = {}
         self.mainFound = False
         self.structToUse = None
         self.structStack = []
 
-
         # Symbol table related
+        self.offset = 0
         self.currentMethodName = ""
         self.currentScope = "global"
         self.pastScope = "None"
@@ -62,8 +84,11 @@ class DecafPrinter(DecafListener):
         self.scopeDictionary = {}
         self.structDictionary = {}
 
-        self.addScopeToSymbolTable(None)
+        # Intermediate code generation
+        self.quadList = []
+        self.nodeAddr = {}
 
+        self.addScopeToSymbolTable(None)
         super().__init__()
 
     def returnErrorList(self):
@@ -234,7 +259,7 @@ class DecafPrinter(DecafListener):
         # 2: ;
         # Everything related to returns
         if ctx.getChild(0).getText() == "return":
-            rootMethod = self.getReturnTypeOfMethod(self.currentScope)
+            rootMethod = self.getRootMethod(self.currentScope)
             methodType = rootMethod.returnType
             expressionOom = ctx.getChild(1)
 
@@ -530,8 +555,51 @@ class DecafPrinter(DecafListener):
         if (key not in self.errorDictionary):
             self.errorDictionary[key] = body 
 
-        #errorMsg = "Error at line (" + str(line) + "): " + body
-        #self.errorList.append(errorMsg)
+    def getRootMethod(self, scope):
+        scopeObject = self.scopeDictionary.get(scope)
+
+        if (scopeObject.parentKey != "global"):
+            scopeObject = self.getRootMethod(scopeObject.parentKey)
+
+        return scopeObject
+
+    def checkMethodParameters(self, scope, checkId):
+        isInParams = False
+        rootMethod = self.getRootMethod(scope)
+        rmSymbolTable = rootMethod.symbolTable
+        paramList = []
+
+        for varId, varObj in rmSymbolTable.items():
+            if varObj.varContext == "param":
+                paramList.append(varObj.varId)
+
+        if checkId in paramList: isInParams = True 
+        
+        return isInParams
+
+    def checkGlobalVars(self, varId):
+        isInGlobal = False
+        tempSymbolTable = self.scopeDictionary.get("global").symbolTable
+
+        if varId in tempSymbolTable:
+            isInGlobal = True
+
+        return isInGlobal
+
+    def compareParameters(self, methodObj, args, methodCallTypes):
+        symbolTable = methodObj.symbolTable
+        methodDeclarationTypes = []
+
+        # Conseguimos los parametros del método
+        for varId, varItem in symbolTable.items():
+            if varItem.varContext == "param":
+                methodDeclarationTypes.append(varItem.varType)
+
+        if (methodCallTypes == methodDeclarationTypes):
+            return True 
+        else:
+            return False
+
   
     # -----------------------------------------------------------------------
     # TODO: Offsets...
@@ -555,7 +623,8 @@ class DecafPrinter(DecafListener):
         tempSymbolTable = self.scopeDictionary.get(self.currentScope).symbolTable
 
         if varId not in tempSymbolTable:
-            tempSymbolTable[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize, isArray)
+            tempSymbolTable[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize, isArray, self.offset)
+            self.offset += currentVarSize
             canAdd = True
         else:
             canAdd = False
@@ -588,28 +657,6 @@ class DecafPrinter(DecafListener):
         scopeObject = self.scopeDictionary.get(methodId)
         return scopeObject
 
-    def getReturnTypeOfMethod(self, scope):
-        scopeObject = self.scopeDictionary.get(scope)
-
-        if (scopeObject.parentKey != "global"):
-            scopeObject = self.getReturnTypeOfMethod(scopeObject.parentKey)
-
-        return scopeObject
-        
-
-    def compareParameters(self, methodObj, args, methodCallTypes):
-        symbolTable = methodObj.symbolTable
-        methodDeclarationTypes = []
-
-        # Conseguimos los parametros del método
-        for varId, varItem in symbolTable.items():
-            if varItem.varContext == "param":
-                methodDeclarationTypes.append(varItem.varType)
-
-        if (methodCallTypes == methodDeclarationTypes):
-            return True 
-        else:
-            return False
     #-------------------------------
     # Structs
 
@@ -632,7 +679,8 @@ class DecafPrinter(DecafListener):
         tempStructSize = self.structDictionary.get(structId).size
 
         if varId not in tempStructMembers:
-            tempStructMembers[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize, isArray)
+            tempStructMembers[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize, isArray, self.offset)
+            self.offset += currentVarSize
             tempStructSize += currentVarSize
             canAdd = True
         else:
@@ -648,6 +696,22 @@ class DecafPrinter(DecafListener):
             structMember = self.structDictionary[structId]
 
         return structMember
+
+    # -------------------------------
+    # Intermediate code generation
+    def addQuad(self, op, arg1, arg2, result, stringOutput):
+        quad = QuadBucket(op, arg1, arg2, result, stringOutput)
+        self.quadList(quad)
+
+    def generateCode(self):
+        if (self.currentScope == 'global'):
+            codeContext = "G"
+            print("gen")
+        else:
+            print("gen")
+
+    
+
 #---------------------------------------------------------------------------------------------------
 
 def check(argv):
@@ -670,7 +734,7 @@ def check(argv):
         print("     Return type: ", v.returnType)
         print("     Items: ")
         for var, varItem in v.symbolTable.items():
-            print("         VarId: " + var + ", VarType: " + varItem.varType + ", Num: " + str(varItem.num) + ", Size: " + str(varItem.size) + ", isArray: " + str(varItem.isArray))
+            print("         VarId: " + var + ", VarType: " + varItem.varType + ", Num: " + str(varItem.num) + ", Size: " + str(varItem.size) + ", isArray: " + str(varItem.isArray) + ", Offset: " + str(varItem.offset))
 
     print("--------------------------------------------")
     print("STRUCT INFORMATION \n")
@@ -679,7 +743,7 @@ def check(argv):
         print("STRUCT: ", c)
         print("     Items: ")
         for var, varItem in v.structMembers.items():
-            print("         VarId: " + var + ", VarType: " + varItem.varType + ", Num: " + str(varItem.num) + ", Size: " + str(varItem.size) + ", isArray: " + str(varItem.isArray))
+            print("         VarId: " + var + ", VarType: " + varItem.varType + ", Num: " + str(varItem.num) + ", Size: " + str(varItem.size) + ", isArray: " + str(varItem.isArray) + ", Offset: " + str(varItem.offset))
 
     print("--------------------------------------------")
 
