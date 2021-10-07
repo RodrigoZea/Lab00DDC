@@ -48,14 +48,14 @@ Kind of literal to the book in everything.
     arg2: stores arg2, not every operation will need to use arg2. i.e. minus or not operations.
     result: stores the result of the operation. Some operators dont use this
 """
-# String output?
 class QuadBucket():
-    def __init__(self, op, arg1, arg2, result, stringOutput):
+    def __init__(self, op, arg1, arg2, result):
+        # String
         self.op = op
+        # AddrEntry
         self.arg1 = arg1
         self.arg2 = arg2
         self.result = result
-        self.stringOutput = stringOutput
 
 class AddrEntry():
     def __init__(self, addr, label):
@@ -87,6 +87,7 @@ class DecafPrinter(DecafListener):
         # Intermediate code generation
         self.quadList = []
         self.nodeAddr = {}
+        self.tempCounter = 1
 
         self.addScopeToSymbolTable(None)
         super().__init__()
@@ -204,6 +205,7 @@ class DecafPrinter(DecafListener):
 
     # ----------------------------------------------------------------------
     # Exit
+    """ General purpose """
     def exitMethodDeclaration(self, ctx: DecafParser.MethodDeclarationContext):
         methodName = ctx.getChild(1).getText()
         if (methodName == 'main'):
@@ -283,139 +285,8 @@ class DecafPrinter(DecafListener):
                         self.addError((ctx.start.line, "returnNotMatching"), "Return statement type doesn't match with method type.")
                 else:
                     self.nodeTypes[ctx] = 'error' 
-                    self.addError((ctx.start.line, "unacceptedMethodType"), "Method type is not accepted by language.")                
+                    self.addError((ctx.start.line, "unacceptedMethodType"), "Method type is not accepted by language.")   
 
-    # NOTE: Se debe de saltar un nodo siempre porque no se está tomando en cuenta el expression padre, se debe obtener el t ipo de los literals.
-    # * / %
-    def exitExpr_arith5(self, ctx: DecafParser.Expr_arith5Context):
-        op1 = ctx.getChild(0)
-        op2 = ctx.getChild(2)
-
-        if(self.nodeTypes[op1] == 'int' and self.nodeTypes[op2] == 'int'):
-            # Validar el tipo de expression (operador) expression, ver si ambos son int
-            # Una vez se validó, lo podemos agregar a nuestro diccionario
-            self.nodeTypes[ctx] = 'int'
-        else:
-            # Si no pues es un error.
-            self.nodeTypes[ctx] = 'error'
-            self.addError((ctx.start.line, "typingNoMatch"), "Operation expected two integer typed operators.")  
-    # + -
-    def exitExpr_arith4(self, ctx: DecafParser.Expr_arith5Context):
-        op1 = ctx.getChild(0)
-        op2 = ctx.getChild(2)
-
-        if(self.nodeTypes[op1] == 'int' and self.nodeTypes[op2] == 'int'):
-            # Validar el tipo de expression (operador) expression, ver si ambos son int
-            # Una vez se validó, lo podemos agregar a nuestro diccionario
-            self.nodeTypes[ctx] = 'int'
-        else:
-            # Si no pues es un error.
-            self.nodeTypes[ctx] = 'error'
-            self.addError((ctx.start.line, "typingNoMatch"), "Operation expected two integer typed operators.")    
-
-    # eq_op: == != | rel_op: < <= > >=
-    def exitExpr_arith3(self, ctx: DecafParser.Expr_arith3Context):
-        op1 = ctx.getChild(0)
-        op2 = ctx.getChild(2)
-        symbol = ctx.getChild(1).getText()
-
-        if (symbol == '<' or symbol == '<=' or symbol == '>' or symbol == '>='):
-            if(self.nodeTypes[op1] == 'int' and self.nodeTypes[op2] == 'int'):
-                # Validar el tipo de expression (operador) expression, ver si ambos son int
-                # Una vez se validó, lo podemos agregar a nuestro diccionario
-                self.nodeTypes[ctx] = 'boolean'
-            else:
-                # Si no pues es un error.
-                self.nodeTypes[ctx] = 'error'
-                self.addError((ctx.start.line, "typingNoMatch"), "Operation expected two integer typed operators.")
-        elif (symbol == "==" or symbol == "!="):
-            allowed = ('int', 'char', 'boolean')
-            type1 = self.nodeTypes[op1] 
-            type2 = self.nodeTypes[op2]
-
-            # Chequear tipos permitidos
-            if (type1 in allowed and type2 in allowed):
-                if(self.nodeTypes[op1] == self.nodeTypes[op2]):
-                    # Una vez se validó, lo podemos agregar a nuestro diccionario
-                    self.nodeTypes[ctx] = 'boolean'
-                else:
-                    # Si no pues es un error.
-                    self.nodeTypes[ctx] = 'error'
-                    self.addError((ctx.start.line, "typingNoMatch"), "Operation expected two integer typed operators.")  
-            # Si no está entre los permitidos, es error
-            else:
-                self.nodeTypes[ctx] = 'error'
-                self.addError((ctx.start.line, "typingNoMatch"), "One of the operators has a type not accepted by the language.")      
-
-    # &&
-    def exitArith_op_second(self, ctx: DecafParser.Arith_op_secondContext):
-        op1 = ctx.getChild(0)
-        op2 = ctx.getChild(2)
-
-        if(self.nodeTypes[op1] == 'boolean' and self.nodeTypes[op2] == 'boolean'):
-            # Validar el tipo de expression (operador) expression, ver si ambos son int
-            # Una vez se validó, lo podemos agregar a nuestro diccionario
-            self.nodeTypes[ctx] = 'boolean'
-        else:
-            # Si no pues es un error.
-            self.nodeTypes[ctx] = 'error' 
-            self.addError((ctx.start.line, "typingNoMatch"), "Operation expected two boolean typed operators.")   
-
-    # ||
-    def exitArith_op_first(self, ctx: DecafParser.Arith_op_firstContext):
-        op1 = ctx.getChild(0)
-        op2 = ctx.getChild(2)
-
-        if(self.nodeTypes[op1] == 'boolean' and self.nodeTypes[op2] == 'boolean'):
-            # Validar el tipo de expression (operador) expression, ver si ambos son int
-            # Una vez se validó, lo podemos agregar a nuestro diccionario
-            self.nodeTypes[ctx] = 'boolean'
-        else:
-            # Si no pues es un error.
-            self.nodeTypes[ctx] = 'error'
-            self.addError((ctx.start.line, "typingNoMatch"), "Operation expected two boolean typed operators.")
-
-    # !
-    def exitExpr_not(self, ctx: DecafParser.Expr_notContext):
-        op1 = ctx.getChild(1)
-
-        if(self.nodeTypes[op1] == 'boolean'):
-            # Validar el tipo de expression (operador) expression, ver si ambos son int
-            # Una vez se validó, lo podemos agregar a nuestro diccionario
-            self.nodeTypes[ctx] = 'boolean'
-        else:
-            # Si no pues es un error.
-            self.nodeTypes[ctx] = 'error'
-            self.addError((ctx.start.line, "typingNoMatch"), "!: Operation expected a boolean typed operator.")
-
-
-    def exitExpr_minus(self, ctx: DecafParser.Expr_minusContext):
-        op1 = ctx.getChild(1)
-
-        if(self.nodeTypes[op1] == 'int'):
-            # Validar el tipo de expression (operador) expression, ver si ambos son int
-            # Una vez se validó, lo podemos agregar a nuestro diccionario
-            self.nodeTypes[ctx] = 'int'
-        else:
-            # Si no pues es un error.
-            self.nodeTypes[ctx] = 'error'
-            self.addError((ctx.start.line, "typingNoMatch"), "-: Operation expected an int typed operator.")
-
-    def exitExpr_parenthesis(self, ctx: DecafParser.Expr_parenthesisContext):
-        self.nodeTypes[ctx] = self.nodeTypes[ctx.expression()]
-        
-    def exitInt_literal(self, ctx: DecafParser.Int_literalContext):
-        self.nodeTypes[ctx] = 'int'
-
-    def exitChar_literal(self, ctx: DecafParser.Char_literalContext):
-        self.nodeTypes[ctx] = 'char'
-
-    def exitBool_literal(self, ctx: DecafParser.Bool_literalContext):
-        self.nodeTypes[ctx] = 'boolean'
-
-    def exitExpr_loc(self, ctx: DecafParser.Expr_locContext):
-        self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
-    
     def exitLocation(self, ctx: DecafParser.LocationContext):
         myvar = None
 
@@ -459,13 +330,16 @@ class DecafPrinter(DecafListener):
                     self.nodeTypes[ctx] = 'error'
                     self.addError((ctx.start.line, "propNoStruct"), "Parent struct doesn't have this property.")
         else:
+            # Var that doesn't belong to a struct.
             myvar = self.lookupVarInSymbolTable(ctx.getChild(0).getText(), self.currentScope)
             if (myvar != None):
                 self.nodeTypes[ctx] = myvar.varType
+                self.nodeAddr[ctx] = self.createAddrVar(self.currentScope, myvar)
             else:
                 self.nodeTypes[ctx] = 'error'
                 errorMsgWithVar = "Var " + ctx.getChild(0).getText() + " hasn't been defined yet"
                 self.addError((ctx.start.line, "notExistingVar"), errorMsgWithVar)
+                return
         # ------------------------------------------------------------------------------------------------------------
         if (ctx.expression()):
             if (self.nodeTypes[ctx.expression()] != 'int'):
@@ -490,17 +364,155 @@ class DecafPrinter(DecafListener):
 
     def exitVarDeclaration(self, ctx: DecafParser.VarDeclarationContext):
         varType = ctx.getChild(0).getText()
-        self.nodeTypes[ctx] = varType
+        self.nodeTypes[ctx] = varType          
 
-    def exitLiteral(self, ctx: DecafParser.LiteralContext):
+    def exitExpr_loc(self, ctx: DecafParser.Expr_locContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
-
-    def exitExpr_literal(self, ctx: DecafParser.Expr_literalContext):
-        self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
+        self.nodeAddr[ctx] = self.nodeAddr[ctx.getChild(0)]
 
     def exitExpr_mcall(self, ctx: DecafParser.Expr_mcallContext):
-        self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
-    
+        self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]   
+
+    """ Operations """
+    # NOTE: Se debe de saltar un nodo siempre porque no se está tomando en cuenta el expression padre, se debe obtener el t ipo de los literals.
+    # * / %
+    def exitExpr_arith5(self, ctx: DecafParser.Expr_arith5Context):
+        op1 = ctx.getChild(0)
+        op2 = ctx.getChild(2)
+
+        if(self.nodeTypes[op1] == 'int' and self.nodeTypes[op2] == 'int'):
+            # Validar el tipo de expression (operador) expression, ver si ambos son int
+            # Una vez se validó, lo podemos agregar a nuestro diccionario
+            self.nodeTypes[ctx] = 'int'
+        else:
+            # Si no pues es un error.
+            self.nodeTypes[ctx] = 'error'
+            self.addError((ctx.start.line, "typingNoMatch"), "Operation expected two integer typed operators.")  
+
+    # + -
+    def exitExpr_arith4(self, ctx: DecafParser.Expr_arith4Context):
+        op1 = ctx.getChild(0)
+        op2 = ctx.getChild(2)
+        operator = ctx.getChild(1).getText()
+
+        if(self.nodeTypes[op1] == 'int' and self.nodeTypes[op2] == 'int'):
+            # Validar el tipo de expression (operador) expression, ver si ambos son int
+            # Una vez se validó, lo podemos agregar a nuestro diccionario
+            self.nodeTypes[ctx] = 'int'
+
+            """ Code generation """
+            # First, generate a new Temp() according to operator rules.
+            newTemp = self.getNewTemp()
+            # Set address of node to newTemp
+            self.nodeAddr[ctx] = self.createAddrLiteral(newTemp)
+            # Generate quad
+            self.addQuad(operator, self.nodeAddr[op1], self.nodeAddr[op2], self.nodeAddr[ctx])
+        else:
+            # Si no pues es un error.
+            self.nodeTypes[ctx] = 'error'
+            self.addError((ctx.start.line, "typingNoMatch"), "Operation expected two integer typed operators.")    
+            return 
+
+    # eq_op: == != | rel_op: < <= > >=
+    def exitExpr_arith3(self, ctx: DecafParser.Expr_arith3Context):
+        op1 = ctx.getChild(0)
+        op2 = ctx.getChild(2)
+        symbol = ctx.getChild(1).getText()
+
+        if (symbol == '<' or symbol == '<=' or symbol == '>' or symbol == '>='):
+            if(self.nodeTypes[op1] == 'int' and self.nodeTypes[op2] == 'int'):
+                # Validar el tipo de expression (operador) expression, ver si ambos son int
+                # Una vez se validó, lo podemos agregar a nuestro diccionario
+                self.nodeTypes[ctx] = 'boolean'
+            else:
+                # Si no pues es un error.
+                self.nodeTypes[ctx] = 'error'
+                self.addError((ctx.start.line, "typingNoMatch"), "Operation expected two integer typed operators.")
+        elif (symbol == "==" or symbol == "!="):
+            allowed = ('int', 'char', 'boolean')
+            type1 = self.nodeTypes[op1] 
+            type2 = self.nodeTypes[op2]
+
+            # Chequear tipos permitidos
+            if (type1 in allowed and type2 in allowed):
+                if(self.nodeTypes[op1] == self.nodeTypes[op2]):
+                    # Una vez se validó, lo podemos agregar a nuestro diccionario
+                    self.nodeTypes[ctx] = 'boolean'
+                else:
+                    # Si no pues es un error.
+                    self.nodeTypes[ctx] = 'error'
+                    self.addError((ctx.start.line, "typingNoMatch"), "Operation expected two integer typed operators.")  
+            # Si no está entre los permitidos, es error
+            else:
+                self.nodeTypes[ctx] = 'error'
+                self.addError((ctx.start.line, "typingNoMatch"), "One of the operators has a type not accepted by the language.")      
+
+    # &&
+    def exitExpr_arith2(self, ctx: DecafParser.Expr_arith2Context):
+        op1 = ctx.getChild(0)
+        op2 = ctx.getChild(2)
+
+        if(self.nodeTypes[op1] == 'boolean' and self.nodeTypes[op2] == 'boolean'):
+            # Validar el tipo de expression (operador) expression, ver si ambos son int
+            # Una vez se validó, lo podemos agregar a nuestro diccionario
+            self.nodeTypes[ctx] = 'boolean'
+        else:
+            # Si no pues es un error.
+            self.nodeTypes[ctx] = 'error' 
+            self.addError((ctx.start.line, "typingNoMatch"), "Operation expected two boolean typed operators.")   
+
+    # ||
+    def exitExpr_arith1(self, ctx: DecafParser.Expr_arith1Context):
+        op1 = ctx.getChild(0)
+        op2 = ctx.getChild(2)
+
+        if(self.nodeTypes[op1] == 'boolean' and self.nodeTypes[op2] == 'boolean'):
+            # Validar el tipo de expression (operador) expression, ver si ambos son int
+            # Una vez se validó, lo podemos agregar a nuestro diccionario
+            self.nodeTypes[ctx] = 'boolean'
+        else:
+            # Si no pues es un error.
+            self.nodeTypes[ctx] = 'error'
+            self.addError((ctx.start.line, "typingNoMatch"), "Operation expected two boolean typed operators.")
+
+    # !
+    def exitExpr_not(self, ctx: DecafParser.Expr_notContext):
+        op1 = ctx.getChild(1)
+
+        if(self.nodeTypes[op1] == 'boolean'):
+            # Validar el tipo de expression (operador) expression, ver si ambos son int
+            # Una vez se validó, lo podemos agregar a nuestro diccionario
+            self.nodeTypes[ctx] = 'boolean'
+        else:
+            # Si no pues es un error.
+            self.nodeTypes[ctx] = 'error'
+            self.addError((ctx.start.line, "typingNoMatch"), "!: Operation expected a boolean typed operator.")
+
+    def exitExpr_minus(self, ctx: DecafParser.Expr_minusContext):
+        op1 = ctx.getChild(1)
+
+        if(self.nodeTypes[op1] == 'int'):
+            # Validar el tipo de expression (operador) expression, ver si ambos son int
+            # Una vez se validó, lo podemos agregar a nuestro diccionario
+            self.nodeTypes[ctx] = 'int'
+
+            """ Code generation """
+            # First, generate a Temp according to operator rules´.
+            newTemp = self.getNewTemp()
+            # Set address of node to newTemp
+            self.nodeAddr[ctx] = self.createAddrLiteral(newTemp)
+            # Generate quad according to rule
+            self.addQuad('minus', self.nodeAddr[op1], None, self.nodeAddr(ctx))
+
+        else:
+            # Si no pues es un error.
+            self.nodeTypes[ctx] = 'error'
+            self.addError((ctx.start.line, "typingNoMatch"), "-: Operation expected an int typed operator.")
+
+    def exitExpr_parenthesis(self, ctx: DecafParser.Expr_parenthesisContext):
+        self.nodeTypes[ctx] = self.nodeTypes[ctx.expression()]
+        self.nodeAddr[ctx] = self.nodeAddr[ctx.expression()]
+        # TODO: Add code/quad?
 
     def exitStat_assignment(self, ctx: DecafParser.Stat_assignmentContext):
         op1 = ctx.getChild(0)
@@ -510,10 +522,21 @@ class DecafPrinter(DecafListener):
             # Validar el tipo de expression (operador) expression, ver si ambos son int
             # Una vez se validó, lo podemos agregar a nuestro diccionario
             self.nodeTypes[ctx] = self.nodeTypes[op1]
+
+            """ Code generation """
+            # Only code generation, there is no setting addresses for this rule.
+            # top.get(id)
+            self.addQuad('', self.nodeAddr[op2], None, self.nodeAddr[op1])
+            #op1Var = self.lookupVarInSymbolTable(op1, self.currentScope)
+
+            #if (op1Var != None):
+                
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
             self.addError((ctx.start.line ,"typingNoMatch"), "Assigment should be of the same type on its operands.")
+            return
+
 
     def exitStat_if(self, ctx: DecafParser.Stat_ifContext):
         expression = ctx.getChild(2)
@@ -525,7 +548,6 @@ class DecafPrinter(DecafListener):
             self.nodeTypes[ctx] = 'error' 
             self.addError((ctx.start.line ,"typingNoMatch"), "if statement should be a boolean expression.") 
 
-
     # This should be exitStat_while but it was tagged incorrectly in the grammar.
     def exitStat_else(self, ctx: DecafParser.Stat_elseContext):
         expression = ctx.getChild(2)
@@ -536,6 +558,27 @@ class DecafPrinter(DecafListener):
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
             self.addError((ctx.start.line ,"typingNoMatch"), "while statement should be a boolean expression.")
+        
+    """ Literals """
+    def exitInt_literal(self, ctx: DecafParser.Int_literalContext):
+        self.nodeTypes[ctx] = 'int'
+        self.nodeAddr[ctx] = self.createAddrLiteral(ctx.getText())
+
+    def exitChar_literal(self, ctx: DecafParser.Char_literalContext):
+        self.nodeTypes[ctx] = 'char'
+        self.nodeAddr[ctx] = self.createAddrLiteral(ctx.getText())
+
+    def exitBool_literal(self, ctx: DecafParser.Bool_literalContext):
+        self.nodeTypes[ctx] = 'boolean'
+        self.nodeAddr[ctx] = self.createAddrLiteral(ctx.getText())
+    
+    def exitLiteral(self, ctx: DecafParser.LiteralContext):
+        self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
+        self.nodeAddr[ctx] = self.nodeAddr[ctx.getChild(0)]
+
+    def exitExpr_literal(self, ctx: DecafParser.Expr_literalContext):
+        self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
+        self.nodeAddr[ctx] = self.nodeAddr[ctx.getChild(0)]
 
     # -----------------------------------------------------------------------
     # Non override methods
@@ -602,7 +645,6 @@ class DecafPrinter(DecafListener):
 
   
     # -----------------------------------------------------------------------
-    # TODO: Offsets...
     # Symbol Table related methods
     def addScopeToSymbolTable(self, pastScope, methodType=None):
         canAdd = False
@@ -699,19 +741,39 @@ class DecafPrinter(DecafListener):
 
     # -------------------------------
     # Intermediate code generation
-    def addQuad(self, op, arg1, arg2, result, stringOutput):
-        quad = QuadBucket(op, arg1, arg2, result, stringOutput)
-        self.quadList(quad)
+    def addQuad(self, op, arg1, arg2, result):
+        quad = QuadBucket(op, arg1, arg2, result)
+        self.quadList.append(quad)
 
-    def generateCode(self):
-        if (self.currentScope == 'global'):
+    def createAddrVar(self, scope, var):
+        if (scope == 'global'):
             codeContext = "G"
-            print("gen")
         else:
-            print("gen")
+            codeContext = "L"
 
-    
+        addrString = codeContext+"["+str(var.offset)+"]"
 
+        addr = AddrEntry(addrString, None)
+        return addr
+
+    def createAddrLiteral(self, literal):
+        addr = AddrEntry(literal, None)
+        return addr
+
+    def getNewTemp(self):
+        tempName = "t" + str(self.tempCounter)
+        self.tempCounter += 1
+        return tempName
+
+    def getCodeFromQuad(self, quad):
+        quadString = ""
+
+        if (quad.arg2 != None):
+            quadString = quad.result.addr + "=" + quad.arg1.addr  + quad.op + quad.arg2.addr 
+        else:
+            quadString = quad.result.addr + "=" + quad.op + quad.arg1.addr 
+
+        return quadString 
 #---------------------------------------------------------------------------------------------------
 
 def check(argv):
@@ -744,6 +806,14 @@ def check(argv):
         print("     Items: ")
         for var, varItem in v.structMembers.items():
             print("         VarId: " + var + ", VarType: " + varItem.varType + ", Num: " + str(varItem.num) + ", Size: " + str(varItem.size) + ", isArray: " + str(varItem.isArray) + ", Offset: " + str(varItem.offset))
+
+    print("--------------------------------------------")
+
+    print("--------------------------------------------")
+    print("CODE GENERATION \n")
+
+    for quad in printer.quadList:
+        print(printer.getCodeFromQuad(quad))
 
     print("--------------------------------------------")
 
