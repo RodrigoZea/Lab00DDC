@@ -2,6 +2,12 @@ class Program
 {
 
 
+void test(int a){
+	int d;
+	d = 4;
+	d = a;
+}
+
 void main(void)
 {
 	int a;
@@ -10,12 +16,11 @@ void main(void)
 	a = 3;
 	b = 4;
 	c = a + b;
+
+	test(c);
 }
 
 
 }
-
-
-
 
 

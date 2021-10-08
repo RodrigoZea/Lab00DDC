@@ -58,9 +58,11 @@ class QuadBucket():
         self.result = result
 
 class AddrEntry():
-    def __init__(self, addr, label):
+    def __init__(self, addr, lblTrue, lblFalse, lblNext):
         self.addr = addr
-        self.label = label
+        self.lblTrue = lblTrue
+        self.lblFalse = lblFalse
+        self.lblNext = lblNext
 
 #---------------------------------------------------------------------------------------------------
 
@@ -148,6 +150,13 @@ class DecafPrinter(DecafListener):
 
         if (added):
             self.nodeTypes[ctx] = 'void'
+
+            """ Code generation """
+            # Create new label
+            newLabel = self.createLabel(methodName)
+            newAddr = self.createAddrLiteral(newLabel)
+            self.addQuad("label", newAddr, None, None)
+
         else:
             self.nodeTypes[ctx] = 'error'
             errorMsg = "Failed to add method " + methodName + " to symbol table, there's already a method with that name."
@@ -239,6 +248,19 @@ class DecafPrinter(DecafListener):
 
             if paramsEquality:
                 self.nodeTypes[ctx] = methodObj.returnType
+
+                """ Code generation """
+                # Param calls
+                for i in range(0, len(ctx.children)):
+                    if i > 1 and i < len(ctx.children)-1:
+                        if (ctx.getChild(i).getText() != ","):
+                            #paramAddr = AddrEntry(ctx.getChild(i).getText(), None, None, None)
+                            self.addQuad('param', self.nodeAddr[ctx.getChild(i)], None, None)
+
+                # Function call
+                methodAddr = AddrEntry(methodName+","+str(len(methodCallTypes)), None, None, None)
+                self.addQuad('call', methodAddr, None, None)
+
             else:
                 self.nodeTypes[ctx] = 'error'
                 self.addError((ctx.start.line, "paramNoMatch"), "Failed to call method, parameters don't match (either in type or order is incorrect)")
@@ -346,15 +368,18 @@ class DecafPrinter(DecafListener):
                 self.nodeTypes[ctx] = 'error'
                 errorMsg = "<expr> in " + ctx.ID().getText() +  " [<expr>] must be of type int."
                 self.addError((ctx.start.line, "arrayError"), errorMsg)  
+                return
             if (type(ctx.expression()) == DecafParser.Expr_minusContext):
                 self.nodeTypes[ctx] = 'error'
                 errorMsg = "Array index of array " +  ctx.ID().getText()  + " must be a non-negative number. "
                 self.addError((ctx.start.line, "arrayError"), errorMsg) 
+                return
             if (myvar != None):
                 if(not myvar.isArray):
                     self.nodeTypes[ctx] = 'error'
                     errorMsgWithVar = "Var " + myvar.varId + " is not an array."
                     self.addError((ctx.start.line, "noArray"), errorMsgWithVar)
+                return
         else:
             if (myvar != None):
                 if(myvar.isArray):
@@ -379,11 +404,20 @@ class DecafPrinter(DecafListener):
     def exitExpr_arith5(self, ctx: DecafParser.Expr_arith5Context):
         op1 = ctx.getChild(0)
         op2 = ctx.getChild(2)
+        operator = ctx.getChild(1).getText()
 
         if(self.nodeTypes[op1] == 'int' and self.nodeTypes[op2] == 'int'):
             # Validar el tipo de expression (operador) expression, ver si ambos son int
             # Una vez se validó, lo podemos agregar a nuestro diccionario
             self.nodeTypes[ctx] = 'int'
+            
+            """ Code generation """
+            # First, generate a new Temp() according to operator rules.
+            newTemp = self.getNewTemp()
+            # Set address of node to newTemp
+            self.nodeAddr[ctx] = self.createAddrLiteral(newTemp)
+            # Generate quad
+            self.addQuad(operator, self.nodeAddr[op1], self.nodeAddr[op2], self.nodeAddr[ctx])
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
@@ -483,6 +517,14 @@ class DecafPrinter(DecafListener):
             # Validar el tipo de expression (operador) expression, ver si ambos son int
             # Una vez se validó, lo podemos agregar a nuestro diccionario
             self.nodeTypes[ctx] = 'boolean'
+
+            """ Code generation """
+            # First, generate a Temp according to operator rules´.
+            newTemp = self.getNewTemp()
+            # Set address of node to newTemp
+            self.nodeAddr[ctx] = self.createAddrLiteral(newTemp)
+            # Generate quad according to rule
+            self.addQuad('not', self.nodeAddr[op1], None, self.nodeAddr(ctx))
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
@@ -511,8 +553,10 @@ class DecafPrinter(DecafListener):
 
     def exitExpr_parenthesis(self, ctx: DecafParser.Expr_parenthesisContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.expression()]
+
+        """ Code generation """
+        # Generate addr and set it to the same
         self.nodeAddr[ctx] = self.nodeAddr[ctx.expression()]
-        # TODO: Add code/quad?
 
     def exitStat_assignment(self, ctx: DecafParser.Stat_assignmentContext):
         op1 = ctx.getChild(0)
@@ -528,15 +572,12 @@ class DecafPrinter(DecafListener):
             # top.get(id)
             self.addQuad('', self.nodeAddr[op2], None, self.nodeAddr[op1])
             #op1Var = self.lookupVarInSymbolTable(op1, self.currentScope)
-
-            #if (op1Var != None):
-                
+            #if (op1Var != None):         
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
             self.addError((ctx.start.line ,"typingNoMatch"), "Assigment should be of the same type on its operands.")
             return
-
 
     def exitStat_if(self, ctx: DecafParser.Stat_ifContext):
         expression = ctx.getChild(2)
@@ -659,7 +700,11 @@ class DecafPrinter(DecafListener):
     def addVarToSymbolTable(self, varType, varId, varContext, num, isArray):
         if (num == None): num = 1
         canAdd = False
-        currentVarSize = self.calculateSize(varType, num)
+
+        if (varContext == 'param'):
+            currentVarSize = 0
+        else:
+            currentVarSize = self.calculateSize(varType, num)
 
         # Gets the SymbolTable from the current scope
         tempSymbolTable = self.scopeDictionary.get(self.currentScope).symbolTable
@@ -753,11 +798,11 @@ class DecafPrinter(DecafListener):
 
         addrString = codeContext+"["+str(var.offset)+"]"
 
-        addr = AddrEntry(addrString, None)
+        addr = AddrEntry(addrString, None, None, None)
         return addr
 
     def createAddrLiteral(self, literal):
-        addr = AddrEntry(literal, None)
+        addr = AddrEntry(literal, None, None, None)
         return addr
 
     def getNewTemp(self):
@@ -765,13 +810,21 @@ class DecafPrinter(DecafListener):
         self.tempCounter += 1
         return tempName
 
+    def createLabel(self, label_name):
+        newLabel = "l_"+label_name
+        return newLabel
+
     def getCodeFromQuad(self, quad):
         quadString = ""
 
-        if (quad.arg2 != None):
-            quadString = quad.result.addr + "=" + quad.arg1.addr  + quad.op + quad.arg2.addr 
-        else:
-            quadString = quad.result.addr + "=" + quad.op + quad.arg1.addr 
+        if (quad.op == "label"):
+            quadString = quad.arg1.addr + ":"
+        elif (quad.result == None):
+            quadString = "  " + quad.op + " " + quad.arg1.addr
+        elif (quad.arg2 != None):
+            quadString = "  " + quad.result.addr + "=" + quad.arg1.addr  + quad.op + quad.arg2.addr 
+        elif (quad.arg2 == None):
+            quadString = "  " + quad.result.addr + "=" + quad.op + quad.arg1.addr 
 
         return quadString 
 #---------------------------------------------------------------------------------------------------
