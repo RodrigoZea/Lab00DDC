@@ -90,6 +90,7 @@ class DecafPrinter(DecafListener):
         self.quadList = []
         self.nodeAddr = {}
         self.tempCounter = 1
+        self.blockCounter = 1
 
         self.addScopeToSymbolTable(None)
         super().__init__()
@@ -212,6 +213,13 @@ class DecafPrinter(DecafListener):
                 structToUse = self.searchStructMember(structVarType.varType)
                 self.structStack.append(structToUse)
 
+    def enterStat_if(self, ctx: DecafParser.Stat_ifContext):
+        labelTrue = self.createLabel("block"+str(self.blockCounter)+".true")
+        labelNext = self.createLabel("s"+str(self.blockCounter)+".next")
+
+        # Else
+        #if (len(ctx.children) > 5):
+            
     # ----------------------------------------------------------------------
     # Exit
     """ General purpose """
@@ -228,6 +236,11 @@ class DecafPrinter(DecafListener):
     def exitBlock(self, ctx: DecafParser.BlockContext):
         currentBlockObj = self.lookupMethodInSymbolTable(self.currentScope)
         self.enterScope(currentBlockObj.parentKey)
+
+        """ Code generation """
+        if (type(ctx.parentCtx) == DecafParser.Stat_ifContext):
+            nextAddr = self.createAddrNext("next")
+            self.nodeAddr[ctx] = nextAddr
 
     def exitMethodCall(self, ctx: DecafParser.MethodCallContext):
         #self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
@@ -579,11 +592,22 @@ class DecafPrinter(DecafListener):
             self.addError((ctx.start.line ,"typingNoMatch"), "Assigment should be of the same type on its operands.")
             return
 
+    # 'if' '(' expression ')' block | ( 'else' block )? #stat_if
     def exitStat_if(self, ctx: DecafParser.Stat_ifContext):
         expression = ctx.getChild(2)
+        ifTrue = ctx.getChild(4)
 
         if(self.nodeTypes[expression] == 'boolean'):
             self.nodeTypes[ctx] = 'boolean'
+
+            """ Code generation """
+            # Create labels for the expression
+            labelTrue = self.createLabel("block"+str(self.blockCounter)+".true")
+            labelFalse = self.nodeAddr[ifTrue].next
+            addrLabels = self.createAddrLabels(labelTrue, labelFalse)
+            self.nodeAddr[expression] = addrLabels
+
+            self.addQuad("label", addrLabels, None, None)
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error' 
@@ -700,11 +724,7 @@ class DecafPrinter(DecafListener):
     def addVarToSymbolTable(self, varType, varId, varContext, num, isArray):
         if (num == None): num = 1
         canAdd = False
-
-        if (varContext == 'param'):
-            currentVarSize = 0
-        else:
-            currentVarSize = self.calculateSize(varType, num)
+        currentVarSize = self.calculateSize(varType, num)
 
         # Gets the SymbolTable from the current scope
         tempSymbolTable = self.scopeDictionary.get(self.currentScope).symbolTable
@@ -805,6 +825,14 @@ class DecafPrinter(DecafListener):
         addr = AddrEntry(literal, None, None, None)
         return addr
 
+    def createAddrLabels(self, lblTrue, lblFalse):
+        addr = AddrEntry(None, lblTrue, lblFalse, None)
+        return addr
+
+    def createAddrNext(self, lblNext):
+        addr = AddrEntry(None, None, None, lblNext)
+        return addr
+
     def getNewTemp(self):
         tempName = "t" + str(self.tempCounter)
         self.tempCounter += 1
@@ -818,7 +846,8 @@ class DecafPrinter(DecafListener):
         quadString = ""
 
         if (quad.op == "label"):
-            quadString = quad.arg1.addr + ":"
+            if (quad.arg1 != None):
+                quadString = quad.arg1.addr + ":"
         elif (quad.result == None):
             quadString = "  " + quad.op + " " + quad.arg1.addr
         elif (quad.arg2 != None):

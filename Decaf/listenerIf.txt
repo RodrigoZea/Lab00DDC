@@ -1,0 +1,32 @@
+	if (testing == true) {
+		testing_flow = 1;
+	} else {
+		testing_flow = 2;
+	}
+    c = 2+3;
+
+Asumamos que testing_flow es L[0], c es L[4]
+
+if testing == true goto l_B.true
+l_B.true:
+    L[0] = 1
+    goto l_S.next
+l_B.false:
+    L[0] = 2
+l_S.next:
+    L[4] = 2 + 3
+
+--------------------------------------------------------------
+enterIf
+enterExpression
+enterBlock1
+enterBlock2 
+exitBlock2
+exitBlock1
+exitExpression
+exitIf
+
+enterIf, crear Addr(true, false) y crear SAddr(next)
+enterBlock1, agregar quad con label(true), luego se genera su código
+enterBlock2, agregar quad con label(false), luego se genera su código
+exitIf, agregar quad con label(next), luego se genera el codigo normal
