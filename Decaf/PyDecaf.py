@@ -17,7 +17,7 @@ class VarSymbolTableItem():
 
     scope: scope it belongs to. (CURRENTLY OMMITED)
     """
-    def __init__(self, varId, varType, varContext, num, size, isArray, offset):
+    def __init__(self, varId, varType, varContext, num, size, isArray, offset, scope):
         self.varId = varId 
         self.varType = varType
         self.value = None
@@ -26,6 +26,7 @@ class VarSymbolTableItem():
         self.offset = offset
         self.varContext = varContext
         self.isArray = isArray
+        self.scope = scope
 
 class StructSymbolTableItem():
     def __init__(self, structId, structMembers):
@@ -91,6 +92,7 @@ class DecafPrinter(DecafListener):
         self.nodeAddr = {}
         self.tempCounter = 1
         self.blockCounter = 1
+        self.firstCheck = False
 
         self.addScopeToSymbolTable(None)
         super().__init__()
@@ -120,7 +122,7 @@ class DecafPrinter(DecafListener):
 
         if firstChild == "struct":
             structId = parentCtx.getChild(1).getText()
-            added = self.addVarToStruct(structId, varType, varId, "blockVar", value, isArray)
+            added = self.addVarToStruct(structId, varType, varId, "blockVar", value, isArray, self.currentScope)
 
             if (added):
                 self.nodeTypes[ctx] = 'void'
@@ -129,7 +131,7 @@ class DecafPrinter(DecafListener):
                 errorMsg = "Failed to add variable " + varId + " to struct, variable already exists."
                 self.addError((ctx.start.line, "existingValue"), errorMsg)
         else:
-            added = self.addVarToSymbolTable(varType, varId, "blockVar", value, isArray)
+            added = self.addVarToSymbolTable(varType, varId, "blockVar", value, isArray, self.currentScope)
 
             if (added):
                 self.nodeTypes[ctx] = 'void'
@@ -179,6 +181,20 @@ class DecafPrinter(DecafListener):
         if (added):
             self.nodeTypes[ctx] = 'void'
 
+        """ Code generation """
+        # If / Else
+        if (type(parentCtx) == DecafParser.Stat_ifContext):
+            parentAddr = self.nodeAddr[parentCtx]
+            if (self.firstCheck == False):
+                self.addQuad("labelt", parentAddr, None, None)
+                self.firstCheck = True 
+            else:
+                exprAddr = self.nodeAddr[parentCtx.getChild(2)]
+                self.addQuad('goton', exprAddr, None, None)
+                self.addQuad("labelf", parentAddr, None, None)
+                self.firstCheck = False 
+
+
     def enterParameter(self, ctx: DecafParser.ParameterContext):
         isArray = False
         if (len(ctx.children) > 2): isArray=True
@@ -188,7 +204,7 @@ class DecafPrinter(DecafListener):
         if paramType != 'void':
             paramId = ctx.getChild(1).getText()
 
-            added = self.addVarToSymbolTable(paramType, paramId, "param", None, isArray)
+            added = self.addVarToSymbolTable(paramType, paramId, "param", None, isArray, self.currentScope)
             if (added):
                 self.nodeTypes[ctx] = 'void'
             else:
@@ -217,9 +233,22 @@ class DecafPrinter(DecafListener):
         labelTrue = self.createLabel("block"+str(self.blockCounter)+".true")
         labelNext = self.createLabel("s"+str(self.blockCounter)+".next")
 
+        nextAddr = self.createAddrNext(labelNext)
+
         # Else
-        #if (len(ctx.children) > 5):
-            
+        if (len(ctx.children) > 5):
+            labelFalse = self.createLabel("block"+str(self.blockCounter)+".false")
+            ifAddr = self.createAddrLabels(labelTrue, labelFalse)
+        else:
+            ifAddr = self.createAddrLabels(labelTrue, None)
+
+        self.nodeAddr[ctx] = ifAddr
+        self.nodeAddr[ctx.getChild(2)] = nextAddr
+
+        # Quad gen
+        #self.addQuad('if')
+
+
     # ----------------------------------------------------------------------
     # Exit
     """ General purpose """
@@ -236,11 +265,6 @@ class DecafPrinter(DecafListener):
     def exitBlock(self, ctx: DecafParser.BlockContext):
         currentBlockObj = self.lookupMethodInSymbolTable(self.currentScope)
         self.enterScope(currentBlockObj.parentKey)
-
-        """ Code generation """
-        if (type(ctx.parentCtx) == DecafParser.Stat_ifContext):
-            nextAddr = self.createAddrNext("next")
-            self.nodeAddr[ctx] = nextAddr
 
     def exitMethodCall(self, ctx: DecafParser.MethodCallContext):
         #self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
@@ -369,7 +393,7 @@ class DecafPrinter(DecafListener):
             myvar = self.lookupVarInSymbolTable(ctx.getChild(0).getText(), self.currentScope)
             if (myvar != None):
                 self.nodeTypes[ctx] = myvar.varType
-                self.nodeAddr[ctx] = self.createAddrVar(self.currentScope, myvar)
+                self.nodeAddr[ctx] = self.createAddrVar(myvar)
             else:
                 self.nodeTypes[ctx] = 'error'
                 errorMsgWithVar = "Var " + ctx.getChild(0).getText() + " hasn't been defined yet"
@@ -601,13 +625,10 @@ class DecafPrinter(DecafListener):
             self.nodeTypes[ctx] = 'boolean'
 
             """ Code generation """
-            # Create labels for the expression
-            labelTrue = self.createLabel("block"+str(self.blockCounter)+".true")
-            labelFalse = self.nodeAddr[ifTrue].next
-            addrLabels = self.createAddrLabels(labelTrue, labelFalse)
-            self.nodeAddr[expression] = addrLabels
+            exprAddr = self.nodeAddr[expression] 
 
-            self.addQuad("label", addrLabels, None, None)
+            self.addQuad("labeln", exprAddr, None, None)
+            self.blockCounter += 1
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error' 
@@ -721,7 +742,7 @@ class DecafPrinter(DecafListener):
 
         return canAdd
 
-    def addVarToSymbolTable(self, varType, varId, varContext, num, isArray):
+    def addVarToSymbolTable(self, varType, varId, varContext, num, isArray, scope):
         if (num == None): num = 1
         canAdd = False
         currentVarSize = self.calculateSize(varType, num)
@@ -730,7 +751,7 @@ class DecafPrinter(DecafListener):
         tempSymbolTable = self.scopeDictionary.get(self.currentScope).symbolTable
 
         if varId not in tempSymbolTable:
-            tempSymbolTable[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize, isArray, self.offset)
+            tempSymbolTable[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize, isArray, self.offset, scope)
             self.offset += currentVarSize
             canAdd = True
         else:
@@ -776,7 +797,7 @@ class DecafPrinter(DecafListener):
         if structId not in self.structDictionary:
             self.structDictionary[structId] = StructSymbolTableItem(structId=structId, structMembers={})
 
-    def addVarToStruct(self, structId, varType, varId, varContext, num, isArray):
+    def addVarToStruct(self, structId, varType, varId, varContext, num, isArray, scope):
         if (num == None): num = 1
         canAdd = False
         currentVarSize = self.calculateSize(varType, num)
@@ -786,7 +807,7 @@ class DecafPrinter(DecafListener):
         tempStructSize = self.structDictionary.get(structId).size
 
         if varId not in tempStructMembers:
-            tempStructMembers[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize, isArray, self.offset)
+            tempStructMembers[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize, isArray, self.offset, scope)
             self.offset += currentVarSize
             tempStructSize += currentVarSize
             canAdd = True
@@ -810,8 +831,8 @@ class DecafPrinter(DecafListener):
         quad = QuadBucket(op, arg1, arg2, result)
         self.quadList.append(quad)
 
-    def createAddrVar(self, scope, var):
-        if (scope == 'global'):
+    def createAddrVar(self, var):
+        if (var.scope == 'global'):
             codeContext = "G"
         else:
             codeContext = "L"
@@ -848,6 +869,14 @@ class DecafPrinter(DecafListener):
         if (quad.op == "label"):
             if (quad.arg1 != None):
                 quadString = quad.arg1.addr + ":"
+        elif (quad.op == "labelt"):
+            quadString = quad.arg1.lblTrue + ":"
+        elif (quad.op == "labelf"):
+            quadString = quad.arg1.lblFalse + ":"
+        elif (quad.op == "labeln"):
+            quadString = quad.arg1.lblNext + ":"
+        elif (quad.op == "goton"):
+            quadString = "  goto " + quad.arg1.lblNext
         elif (quad.result == None):
             quadString = "  " + quad.op + " " + quad.arg1.addr
         elif (quad.arg2 != None):
