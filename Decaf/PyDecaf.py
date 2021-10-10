@@ -92,6 +92,7 @@ class DecafPrinter(DecafListener):
         self.nodeAddr = {}
         self.tempCounter = 1
         self.blockCounter = 1
+        self.loopCounter = 1
         self.firstCheck = False
 
         self.addScopeToSymbolTable(None)
@@ -192,8 +193,13 @@ class DecafPrinter(DecafListener):
                 exprAddr = self.nodeAddr[parentCtx.getChild(2)]
                 self.addQuad('goton', exprAddr, None, None)
                 self.addQuad("labelf", parentAddr, None, None)
-                self.firstCheck = False 
 
+        # While
+        if (type(parentCtx) == DecafParser.Stat_elseContext):
+            exprAddr = self.nodeAddr[parentCtx.getChild(2)]
+            
+            # Print label true
+            self.addQuad('labelt', exprAddr, None, None)
 
     def enterParameter(self, ctx: DecafParser.ParameterContext):
         isArray = False
@@ -245,8 +251,20 @@ class DecafPrinter(DecafListener):
         self.nodeAddr[ctx] = ifAddr
         self.nodeAddr[ctx.getChild(2)] = nextAddr
 
-        # Quad gen
-        #self.addQuad('if')
+    # While but it's wrongly named
+    def enterStat_else(self, ctx: DecafParser.Stat_elseContext):
+        labelBegin = self.createLabel("loop"+str(self.loopCounter)+".begin")
+
+        labelTrue = self.createLabel("block"+str(self.blockCounter)+".true")
+        labelFalse = self.createLabel("s"+str(self.blockCounter)+".next")
+
+        #self.nodeAddr[ctx] = self.createAddrLabels
+        self.nodeAddr[ctx.getChild(2)] = self.createAddrLabels(labelTrue, labelFalse)
+        self.nodeAddr[ctx.getChild(4)] = self.createAddrNext(labelBegin)
+
+        # Print label(begin)
+        self.addQuad('labeln', self.nodeAddr[ctx.getChild(4)], None, None)
+        # Can now print expression code
 
 
     # ----------------------------------------------------------------------
@@ -629,6 +647,7 @@ class DecafPrinter(DecafListener):
 
             self.addQuad("labeln", exprAddr, None, None)
             self.blockCounter += 1
+            self.firstCheck = False 
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error' 
@@ -640,6 +659,10 @@ class DecafPrinter(DecafListener):
 
         if(self.nodeTypes[expression] == 'boolean'):
             self.nodeTypes[ctx] = 'boolean'
+
+            """ Code generation """
+            self.addQuad("goton", self.nodeAddr[ctx.getChild(4)], None, None)
+            self.blockCounter += 1
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'

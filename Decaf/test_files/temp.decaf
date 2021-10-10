@@ -31,16 +31,16 @@ void main(void)
 		testing_flow = 2;
 	}
 
-	if (testing == true) {
-		testing_flow = 3;
-	} else {
-		testing_flow = 4;
+	while (testing == true) {
+		testing_flow = 1;
 	}
 
 }
 
 
 }
+
+
 
 
 
