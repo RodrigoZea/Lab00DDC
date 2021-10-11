@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 import os
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 from PyDecaf import check
@@ -66,25 +67,32 @@ def run_antlr():
 
 window = tk.Tk()
 window.title("Decaf Editor")
-window.rowconfigure(0, minsize=800, weight=1)
-window.columnconfigure(1, minsize=800, weight=1)
-window.columnconfigure(2, minsize=700, weight=1)
+tabControl = ttk.Notebook(window)
 
-txt_edit = tk.Text(window)
-fr_buttons = tk.Frame(window, relief=tk.RAISED, bd=2)
-btn_open = tk.Button(fr_buttons, text="Open", command=open_file)
-btn_save = tk.Button(fr_buttons, text="Save As...", command=save_file)
-btn_run = tk.Button(fr_buttons, text="Run...", command=run_antlr)
+tab1 = ttk.Frame(tabControl)
+tab2 = ttk.Frame(tabControl)
+  
+tabControl.add(tab1, text ='Syntax Analysis')
+tabControl.add(tab2, text ='Intermediate Code Generation')
+tabControl.pack(expand = 1, fill ="both")
 
-label_errors = tk.Label(window, text="Errors")
+tab1.rowconfigure(0, minsize=800, weight=1)
+tab1.columnconfigure(1, minsize=800, weight=1)
+tab1.columnconfigure(2, minsize=700, weight=1)
 
-btn_open.grid(row=0, column=0, sticky="ew", padx=5)
-btn_save.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
-btn_run.grid(row=2, column=0, sticky="ew", padx=5)
+fr_buttons = ttk.Frame(tab1)
+fr_buttons.grid(row=0, column=0, stick="ns")
+btn_open = ttk.Button(fr_buttons, text="Open", command=open_file)
+btn_open.pack()
+btn_save = ttk.Button(fr_buttons, text="Save As...", command=save_file)
+btn_save.pack()
+btn_run = ttk.Button(fr_buttons, text="Run...", command=run_antlr)
+btn_run.pack()
 
-fr_buttons.grid(row=0, column=0, sticky="ns")
+txt_edit = tk.Text(tab1)
 txt_edit.grid(row=0, column=1, sticky="nsew")
-label_errors.grid(row=0, column=2, sticky="nw", padx=5, pady=5)
 
+label_errors = ttk.Label(tab1, text="Errors")
+label_errors.grid(row=0, column=2, sticky="nw", padx=5, pady=5)
 
 window.mainloop()

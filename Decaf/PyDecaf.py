@@ -516,6 +516,8 @@ class DecafPrinter(DecafListener):
                 # Validar el tipo de expression (operador) expression, ver si ambos son int
                 # Una vez se validó, lo podemos agregar a nuestro diccionario
                 self.nodeTypes[ctx] = 'boolean'
+
+
             else:
                 # Si no pues es un error.
                 self.nodeTypes[ctx] = 'error'
@@ -538,6 +540,11 @@ class DecafPrinter(DecafListener):
             else:
                 self.nodeTypes[ctx] = 'error'
                 self.addError((ctx.start.line, "typingNoMatch"), "One of the operators has a type not accepted by the language.")      
+
+    def createRelQuad(self):
+        print("relQuad")
+        # Gen if
+        # Gen goto
 
     # &&
     def exitExpr_arith2(self, ctx: DecafParser.Expr_arith2Context):
