@@ -953,16 +953,12 @@ def check(argv):
 
     print("--------------------------------------------")
 
-    print("--------------------------------------------")
-    print("CODE GENERATION \n")
-
+    quadTranslated = []
     for quad in printer.quadList:
-        print(printer.getCodeFromQuad(quad))
-
-    print("--------------------------------------------")
+        quadTranslated.append(printer.getCodeFromQuad(quad)+"\n")
 
     #traverse(tree, parser.ruleNames)
-    return printer.errorDictionary
+    return printer.errorDictionary, quadTranslated
 
 def traverse(tree, rule_names, indent = 0):
     if tree.getText() == "<EOF>":

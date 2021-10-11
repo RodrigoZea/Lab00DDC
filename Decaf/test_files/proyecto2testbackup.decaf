@@ -1,6 +1,7 @@
 class Program
 {
 
+int z;
 
 void test(int a){
 	int d;
@@ -13,13 +14,14 @@ void main(void)
 	int a;
 	int b;
 	int c;
-	
+	int testing_flow;
 	boolean testing;
 	testing = true;
-	int testing_flow;
+	
 	a = 3;
 	b = 4;
 	c = a + b;
+	z = 50;
 
 	test(c);
 
@@ -28,9 +30,9 @@ void main(void)
 	} else {
 		testing_flow = 2;
 	}
+
+	while (a < 4) {
+		z = 1;
+	}
+
 }
-
-
-}
-
-
