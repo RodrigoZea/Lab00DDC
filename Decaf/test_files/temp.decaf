@@ -31,14 +31,16 @@ void main(void)
 		testing_flow = 2;
 	}
 
-	while (testing == true) {
-		testing_flow = 1;
+	while (a < 4) {
+		z = 1;
 	}
 
 }
 
 
 }
+
+
 
 
 

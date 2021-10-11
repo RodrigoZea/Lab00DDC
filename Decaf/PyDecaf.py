@@ -185,14 +185,14 @@ class DecafPrinter(DecafListener):
         """ Code generation """
         # If / Else
         if (type(parentCtx) == DecafParser.Stat_ifContext):
-            parentAddr = self.nodeAddr[parentCtx]
+            exprAddr = self.nodeAddr[parentCtx.getChild(2)]
             if (self.firstCheck == False):
-                self.addQuad("labelt", parentAddr, None, None)
+                self.addQuad("labelt", exprAddr, None, None)
                 self.firstCheck = True 
             else:
-                exprAddr = self.nodeAddr[parentCtx.getChild(2)]
-                self.addQuad('goton', exprAddr, None, None)
-                self.addQuad("labelf", parentAddr, None, None)
+                nextAddr = self.nodeAddr[parentCtx.getChild(4)]
+                self.addQuad('goton', nextAddr, None, None)
+                self.addQuad("labelf", exprAddr, None, None)
 
         # While
         if (type(parentCtx) == DecafParser.Stat_elseContext):
@@ -244,12 +244,13 @@ class DecafPrinter(DecafListener):
         # Else
         if (len(ctx.children) > 5):
             labelFalse = self.createLabel("block"+str(self.blockCounter)+".false")
-            ifAddr = self.createAddrLabels(labelTrue, labelFalse)
+            exprAddr = self.createAddrLabels(labelTrue, labelFalse)
         else:
-            ifAddr = self.createAddrLabels(labelTrue, None)
+            labelFalse = labelNext
+            exprAddr = self.createAddrLabels(labelTrue, labelFalse)
 
-        self.nodeAddr[ctx] = ifAddr
-        self.nodeAddr[ctx.getChild(2)] = nextAddr
+        self.nodeAddr[ctx.getChild(2)] = exprAddr
+        self.nodeAddr[ctx.getChild(4)] = nextAddr
 
     # While but it's wrongly named
     def enterStat_else(self, ctx: DecafParser.Stat_elseContext):
@@ -313,7 +314,7 @@ class DecafPrinter(DecafListener):
                             self.addQuad('param', self.nodeAddr[ctx.getChild(i)], None, None)
 
                 # Function call
-                methodAddr = AddrEntry(methodName+","+str(len(methodCallTypes)), None, None, None)
+                methodAddr = AddrEntry("l_"+methodName+","+str(len(methodCallTypes)), None, None, None)
                 self.addQuad('call', methodAddr, None, None)
 
             else:
@@ -412,6 +413,8 @@ class DecafPrinter(DecafListener):
             if (myvar != None):
                 self.nodeTypes[ctx] = myvar.varType
                 self.nodeAddr[ctx] = self.createAddrVar(myvar)
+
+                # Check boolean?
             else:
                 self.nodeTypes[ctx] = 'error'
                 errorMsgWithVar = "Var " + ctx.getChild(0).getText() + " hasn't been defined yet"
@@ -634,18 +637,18 @@ class DecafPrinter(DecafListener):
             self.addError((ctx.start.line ,"typingNoMatch"), "Assigment should be of the same type on its operands.")
             return
 
-    # 'if' '(' expression ')' block | ( 'else' block )? #stat_if
+    # 'if' '(' expression ')' block | ( 'else' block )? 
     def exitStat_if(self, ctx: DecafParser.Stat_ifContext):
         expression = ctx.getChild(2)
-        ifTrue = ctx.getChild(4)
+        statement = ctx.getChild(4)
 
         if(self.nodeTypes[expression] == 'boolean'):
             self.nodeTypes[ctx] = 'boolean'
 
             """ Code generation """
-            exprAddr = self.nodeAddr[expression] 
+            nextAddr = self.nodeAddr[statement] 
 
-            self.addQuad("labeln", exprAddr, None, None)
+            self.addQuad("labeln", nextAddr, None, None)
             self.blockCounter += 1
             self.firstCheck = False 
         else:
