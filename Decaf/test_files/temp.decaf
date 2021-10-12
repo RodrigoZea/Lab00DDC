@@ -23,6 +23,7 @@ void main(void)
 	c = a + b;
 	z = 50;
 
+	// ioasjdioajosdasd
 	test(c);
 
 	if (testing == true) {
@@ -35,10 +36,34 @@ void main(void)
 		z = 1;
 	}
 
+	
+	if (a < 4 || b < 5) {
+		z = 3;
+	}
 }
 
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -93,6 +93,7 @@ class DecafPrinter(DecafListener):
         self.tempCounter = 1
         self.blockCounter = 1
         self.loopCounter = 1
+        self.relCounter = 1
         self.firstCheck = False
 
         self.addScopeToSymbolTable(None)
@@ -267,6 +268,32 @@ class DecafPrinter(DecafListener):
         self.addQuad('labeln', self.nodeAddr[ctx.getChild(4)], None, None)
         # Can now print expression code
 
+    # Falta generacion de codigo
+    # ||
+    def enterExpr_arith1(self, ctx: DecafParser.Expr_arith1Context):
+        op1 = ctx.getChild(0)
+        op2 = ctx.getChild(2)
+
+        op1False = self.createLabel("rel"+str(self.relCounter)+".false")
+
+        self.nodeAddr[op1] = self.createAddrLabels(self.nodeAddr[ctx].lblTrue, op1False)
+        self.nodeAddr[op2] = self.nodeAddr[ctx]
+
+    # &&
+    def enterExpr_arith2(self, ctx: DecafParser.Expr_arith2Context):
+        op1 = ctx.getChild(0)
+        op2 = ctx.getChild(2)
+
+        op1True = self.createLabel("rel"+str(self.relCounter)+".true")
+
+        self.nodeAddr[op1] = self.createAddrLabels(op1True, self.nodeAddr[ctx].lblFalse)
+        self.nodeAddr[op2] = self.nodeAddr[ctx]
+
+    # !
+    def enterExpr_not(self, ctx: DecafParser.Expr_notContext):
+        op = ctx.getChild(1)
+
+        self.nodeAddr[op] = self.nodeAddr[ctx]
 
     # ----------------------------------------------------------------------
     # Exit
@@ -517,7 +544,8 @@ class DecafPrinter(DecafListener):
                 # Una vez se validó, lo podemos agregar a nuestro diccionario
                 self.nodeTypes[ctx] = 'boolean'
 
-
+                self.addQuad(symbol, self.nodeAddr[op1], self.nodeAddr[op2], self.nodeAddr[ctx])
+                self.addQuad('gotof', self.nodeAddr[ctx], None, None)
             else:
                 # Si no pues es un error.
                 self.nodeTypes[ctx] = 'error'
@@ -532,6 +560,9 @@ class DecafPrinter(DecafListener):
                 if(self.nodeTypes[op1] == self.nodeTypes[op2]):
                     # Una vez se validó, lo podemos agregar a nuestro diccionario
                     self.nodeTypes[ctx] = 'boolean'
+
+                    self.addQuad(symbol, self.nodeAddr[op1], self.nodeAddr[op2], self.nodeAddr[ctx])
+                    self.addQuad('gotof', self.nodeAddr[ctx], None, None)
                 else:
                     # Si no pues es un error.
                     self.nodeTypes[ctx] = 'error'
@@ -582,14 +613,6 @@ class DecafPrinter(DecafListener):
             # Validar el tipo de expression (operador) expression, ver si ambos son int
             # Una vez se validó, lo podemos agregar a nuestro diccionario
             self.nodeTypes[ctx] = 'boolean'
-
-            """ Code generation """
-            # First, generate a Temp according to operator rules´.
-            newTemp = self.getNewTemp()
-            # Set address of node to newTemp
-            self.nodeAddr[ctx] = self.createAddrLiteral(newTemp)
-            # Generate quad according to rule
-            self.addQuad('not', self.nodeAddr[op1], None, self.nodeAddr(ctx))
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
@@ -899,7 +922,9 @@ class DecafPrinter(DecafListener):
     def getCodeFromQuad(self, quad):
         quadString = ""
 
-        if (quad.op == "label"):
+        if (quad.op == '<' or quad.op== '<=' or quad.op == '>' or quad.op == '>=' or quad.op == '==' or quad.op == '!='):
+            quadString = '  if ' + quad.arg1.addr + quad.op + quad.arg2.addr + ' goto ' + quad.result.lblTrue
+        elif (quad.op == "label"):
             if (quad.arg1 != None):
                 quadString = quad.arg1.addr + ":"
         elif (quad.op == "labelt"):
@@ -910,6 +935,8 @@ class DecafPrinter(DecafListener):
             quadString = quad.arg1.lblNext + ":"
         elif (quad.op == "goton"):
             quadString = "  goto " + quad.arg1.lblNext
+        elif (quad.op == "gotof"):
+            quadString = "  goto " + quad.arg1.lblFalse
         elif (quad.result == None):
             quadString = "  " + quad.op + " " + quad.arg1.addr
         elif (quad.arg2 != None):
