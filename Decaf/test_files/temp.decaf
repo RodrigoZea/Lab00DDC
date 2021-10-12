@@ -11,11 +11,11 @@ void test(int a){
 
 void main(void)
 {
-	int a;
-	int b;
-	int c;
-	int testing_flow;
-	boolean testing;
+	int a; //0
+	int b; //4
+	int c; //8
+	int testing_flow; //12
+	boolean testing; //16
 	testing = true;
 	
 	a = 3;
@@ -40,10 +40,17 @@ void main(void)
 	if (a < 4 || b < 5) {
 		z = 3;
 	}
+
+	if (!testing) {
+		z = 4;
+	}
 }
 
 
 }
+
+
+
 
 
 

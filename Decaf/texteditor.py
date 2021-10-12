@@ -90,6 +90,7 @@ tabControl.pack(expand = 1, fill ="both")
 tab1.rowconfigure(0, minsize=800, weight=1)
 tab1.columnconfigure(1, minsize=800, weight=1)
 tab1.columnconfigure(2, minsize=700, weight=1)
+
 tab2.rowconfigure(0, minsize=800, weight=1)
 tab2.columnconfigure(0, minsize=800, weight=1)
 

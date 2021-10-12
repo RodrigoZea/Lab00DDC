@@ -79,7 +79,9 @@ class DecafPrinter(DecafListener):
         self.structStack = []
 
         # Symbol table related
-        self.offset = 0
+        self.localOffset = 0
+        self.globalOffset = 0
+
         self.currentMethodName = ""
         self.currentScope = "global"
         self.pastScope = "None"
@@ -304,6 +306,7 @@ class DecafPrinter(DecafListener):
             self.mainFound = True
 
         self.nestedCounter = 1
+        self.localOffset = 0
         self.currentMethodName = "global"
 
         self.enterScope("global")
@@ -546,6 +549,10 @@ class DecafPrinter(DecafListener):
 
                 self.addQuad(symbol, self.nodeAddr[op1], self.nodeAddr[op2], self.nodeAddr[ctx])
                 self.addQuad('gotof', self.nodeAddr[ctx], None, None)
+                self.relCounter += 1
+
+                if (type(ctx.parentCtx) == DecafParser.Expr_arith1Context):
+                    print("afafaf")
             else:
                 # Si no pues es un error.
                 self.nodeTypes[ctx] = 'error'
@@ -563,6 +570,7 @@ class DecafPrinter(DecafListener):
 
                     self.addQuad(symbol, self.nodeAddr[op1], self.nodeAddr[op2], self.nodeAddr[ctx])
                     self.addQuad('gotof', self.nodeAddr[ctx], None, None)
+                    self.relCounter += 1
                 else:
                     # Si no pues es un error.
                     self.nodeTypes[ctx] = 'error'
@@ -571,11 +579,6 @@ class DecafPrinter(DecafListener):
             else:
                 self.nodeTypes[ctx] = 'error'
                 self.addError((ctx.start.line, "typingNoMatch"), "One of the operators has a type not accepted by the language.")      
-
-    def createRelQuad(self):
-        print("relQuad")
-        # Gen if
-        # Gen goto
 
     # &&
     def exitExpr_arith2(self, ctx: DecafParser.Expr_arith2Context):
@@ -803,12 +806,22 @@ class DecafPrinter(DecafListener):
         canAdd = False
         currentVarSize = self.calculateSize(varType, num)
 
+        currentOffset = 0
+
+        if (self.currentScope == 'global'):
+            currentOffset = self.globalOffset
+        else:
+            currentOffset = self.localOffset
+
         # Gets the SymbolTable from the current scope
         tempSymbolTable = self.scopeDictionary.get(self.currentScope).symbolTable
 
         if varId not in tempSymbolTable:
-            tempSymbolTable[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize, isArray, self.offset, scope)
-            self.offset += currentVarSize
+            tempSymbolTable[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize, isArray, currentOffset, scope)
+            if (self.currentScope == 'global'):
+                self.globalOffset += currentVarSize
+            else:
+                self.localOffset += currentVarSize
             canAdd = True
         else:
             canAdd = False
@@ -858,13 +871,23 @@ class DecafPrinter(DecafListener):
         canAdd = False
         currentVarSize = self.calculateSize(varType, num)
 
+        currentOffset = 0
+
+        if (self.currentScope == 'global'):
+            currentOffset = self.globalOffset
+        else:
+            currentOffset = self.localOffset
+
         structId = "struct"+structId
         tempStructMembers = self.structDictionary.get(structId).structMembers
         tempStructSize = self.structDictionary.get(structId).size
 
         if varId not in tempStructMembers:
-            tempStructMembers[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize, isArray, self.offset, scope)
-            self.offset += currentVarSize
+            tempStructMembers[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize, isArray, currentOffset, scope)
+            if (self.currentScope == 'global'):
+                self.globalOffset += currentVarSize
+            else:
+                self.localOffset += currentVarSize
             tempStructSize += currentVarSize
             canAdd = True
         else:
