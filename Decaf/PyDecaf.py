@@ -306,6 +306,7 @@ class DecafPrinter(DecafListener):
             self.mainFound = True
 
         self.nestedCounter = 1
+        self.tempCounter = 1
         self.localOffset = 0
         self.currentMethodName = "global"
 
@@ -442,9 +443,7 @@ class DecafPrinter(DecafListener):
             myvar = self.lookupVarInSymbolTable(ctx.getChild(0).getText(), self.currentScope)
             if (myvar != None):
                 self.nodeTypes[ctx] = myvar.varType
-                self.nodeAddr[ctx] = self.createAddrVar(myvar)
-
-                # Check boolean?
+                self.nodeAddr[ctx] = self.createAddrVar(myvar, myvar.offset)
             else:
                 self.nodeTypes[ctx] = 'error'
                 errorMsgWithVar = "Var " + ctx.getChild(0).getText() + " hasn't been defined yet"
@@ -467,7 +466,18 @@ class DecafPrinter(DecafListener):
                     self.nodeTypes[ctx] = 'error'
                     errorMsgWithVar = "Var " + myvar.varId + " is not an array."
                     self.addError((ctx.start.line, "noArray"), errorMsgWithVar)
-                return
+                    return
+
+                # Can check array addresses
+                newTemp = self.getNewTemp()
+                tempAddr = self.createAddrLiteral(newTemp)
+                self.nodeAddr[ctx] = self.createAddrVar(myvar, newTemp)
+
+                expressionAddr = self.nodeAddr[ctx.expression()]
+
+                typeWidth = self.typeSizes[myvar.varType]
+                typeWidthAddr = self.createAddrLiteral(typeWidth)
+                self.addQuad('genArray', expressionAddr, typeWidthAddr, tempAddr)
         else:
             if (myvar != None):
                 if(myvar.isArray):
@@ -550,9 +560,6 @@ class DecafPrinter(DecafListener):
                 self.addQuad(symbol, self.nodeAddr[op1], self.nodeAddr[op2], self.nodeAddr[ctx])
                 self.addQuad('gotof', self.nodeAddr[ctx], None, None)
                 self.relCounter += 1
-
-                if (type(ctx.parentCtx) == DecafParser.Expr_arith1Context):
-                    print("afafaf")
             else:
                 # Si no pues es un error.
                 self.nodeTypes[ctx] = 'error'
@@ -910,14 +917,18 @@ class DecafPrinter(DecafListener):
         quad = QuadBucket(op, arg1, arg2, result)
         self.quadList.append(quad)
 
-    def createAddrVar(self, var):
+
+    def getCodeContext(self, var):
         if (var.scope == 'global'):
             codeContext = "G"
         else:
             codeContext = "L"
 
-        addrString = codeContext+"["+str(var.offset)+"]"
+        return codeContext
 
+    def createAddrVar(self, var, memoryLoc):
+        codeContext = self.getCodeContext(var)
+        addrString = codeContext+"["+str(memoryLoc)+"]"
         addr = AddrEntry(addrString, None, None, None)
         return addr
 
@@ -945,7 +956,9 @@ class DecafPrinter(DecafListener):
     def getCodeFromQuad(self, quad):
         quadString = ""
 
-        if (quad.op == '<' or quad.op== '<=' or quad.op == '>' or quad.op == '>=' or quad.op == '==' or quad.op == '!='):
+        if (quad.op == "genArray"):
+            quadString = "  " + quad.result.addr + "=" + str(quad.arg1.addr) + "*" + str(quad.arg2.addr)
+        elif (quad.op == '<' or quad.op== '<=' or quad.op == '>' or quad.op == '>=' or quad.op == '==' or quad.op == '!='):
             quadString = '  if ' + quad.arg1.addr + quad.op + quad.arg2.addr + ' goto ' + quad.result.lblTrue
         elif (quad.op == "label"):
             if (quad.arg1 != None):

@@ -11,16 +11,19 @@ void test(int a){
 
 void main(void)
 {
-	int a; //0
-	int b; //4
-	int c; //8
-	int testing_flow; //12
-	boolean testing; //16
-	testing = true;
+	int a; 
+	int b; 
+	int c; 
+	int testing_flow; 
+	int y[10];
+	boolean testing; 
 	
+	y[3] = 100;
+	testing = true;
 	a = 3;
 	b = 4;
 	c = a + b;
+	y[3] = a+b;
 	z = 50;
 
 	// ioasjdioajosdasd
@@ -41,13 +44,25 @@ void main(void)
 		z = 3;
 	}
 
-	if (!testing) {
-		z = 4;
-	}
 }
 
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

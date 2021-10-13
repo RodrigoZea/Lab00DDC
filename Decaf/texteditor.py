@@ -66,12 +66,13 @@ def run_antlr():
         element = element + key[1] + " at line (" + str(key[0]) + "): " + value +'\n'
 
     if (n == 0): element = "No errors!"
-    label_errors.config(text=element)
+    label_errors.config(text=element)  
 
     element = ''
     for quad in quads:
         element = element + quad
 
+    txt_codegen.delete(1.0, tk.END)
     txt_codegen.insert(tk.END, element)
 
 
