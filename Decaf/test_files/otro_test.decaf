@@ -1,0 +1,53 @@
+class Program
+{
+
+
+
+int z;
+
+void test(int a){
+	int d;
+	d = 4;
+	d = a;
+}
+
+void main(void)
+{
+	int a; //0
+	int b;  //4
+	int c; //8
+	int testing_flow; //12 
+	boolean testing; //78
+	boolean asdf;
+	int y[10]; //16
+	
+	y[3] = 100;
+	testing = true;
+	asdf = false;
+	a = 3;
+	b = 4;
+	c = a + b;
+	y[3] = a+b;
+	z = 50;
+
+	// ioasjdioajosdasd
+	test(c);
+
+	if (a < 3) {
+		testing_flow = 1;
+	}
+
+	if (testing == true || asdf == false){
+		testing_flow = 3;
+	}
+}
+}
+
+
+
+
+
+
+
+
+

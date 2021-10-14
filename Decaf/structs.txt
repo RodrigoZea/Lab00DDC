@@ -1,0 +1,41 @@
+Tiene que ser en exitLocation sí o sí
+i = 1
+a[i].b[5].c[2] =3
+
+i=1
+L[0] = 1
+
+primer exitLocation es c[2]
+t1 = 2*4 (digamos que c es int[])
+t2 = c.offset + t1
+
+exitLocation b[5] array de structs
+t3 = nodeAddr[expression] (o sea 5)*structSize
+t4 = t3 + nodeAddr[location] (o sea t2)
+
+exitLocation a[i] array de structs
+t5 = L[0]*(structSize/num)
+t6 = t5+t4
+
+Finalmente
+L[t6] = 1
+
+--------------------------------------------------------------
+i = 1
+a[i].b.c = 3
+
+i=1
+L[0] = 1
+
+primer exitLocation es c
+t1 = c.offset
+
+exitLocation b
+t2 = structSize + nodeAddr[location] (o sea t1)
+
+exitLocation a[i] array de structs
+t3 = L[0]*(structSize/num)
+t4 = t3+nodeAddr[location] (o sea t2)
+
+Finalmente
+L[t6] = 1

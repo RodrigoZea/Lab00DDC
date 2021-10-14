@@ -1,26 +1,30 @@
 class Program
 {
-struct MyTest
+struct MyTest //45
 {
-	int n;
-	char b;
-	int c[10];
+	int n; //0
+	char b; //4
+	int c[10]; //6
 };
 
-struct OtherTest
+struct OtherTest //454
 {
-	struct MyTest T[10];
-	int n;
+	struct MyTest T[10]; //0
+	int n; //450
 };
 
 
 void main(void)
 {
-	struct OtherTest M[5];
-	int i;
+	struct OtherTest M[5]; //2270
+	int i; 
 	i = 1;	
 	M[i].T[1].n = 2;
-	
+	// M.offset = 0
+	// M[i] = 454 
+	// T[1] = 45
+	// n.offset = 0
+	// Total: 499
 }
 
 }

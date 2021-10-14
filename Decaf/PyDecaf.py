@@ -205,7 +205,7 @@ class DecafPrinter(DecafListener):
             exprAddr = self.nodeAddr[parentCtx.getChild(2)]
             
             # Print label true
-            self.addQuad('labelt', exprAddr, None, None)
+            self.addQuad("labelt", exprAddr, None, None)
 
     def enterParameter(self, ctx: DecafParser.ParameterContext):
         isArray = False
@@ -404,9 +404,6 @@ class DecafPrinter(DecafListener):
 
     def exitLocation(self, ctx: DecafParser.LocationContext):
         myvar = None
-        calculateStruct = False
-        lastChild = False
-        isMiddle = False
         # ------------------------------------------------------------------------------------------------------------
         # Syntax check: Structs
         #   Case 1: There is a property being accesed.
@@ -420,8 +417,6 @@ class DecafPrinter(DecafListener):
                     myvar = currentTable.structMembers[ctx.getChild(0).getText()]
                     if (myvar != None):
                         self.nodeTypes[ctx] = self.nodeTypes[ctx.location()]
-                        self.currentStructMovement += myvar.size
-                        isMiddle = True
                     else:
                         self.nodeTypes[ctx] = 'error'
                         errorMsg = "Property " + ctx.getChild(0).getText() + " not found on struct."
@@ -436,7 +431,6 @@ class DecafPrinter(DecafListener):
                 if (myvar != None):
                     #structToUse = self.searchStructMember(structVarType.varType)
                     self.nodeTypes[ctx] = self.nodeTypes[ctx.location()]
-                    calculateStruct = True
                 else:
                     self.nodeTypes[ctx] = 'error'
                     self.addError((ctx.start.line, "unreachable"), "Undefined.")
@@ -449,9 +443,6 @@ class DecafPrinter(DecafListener):
                     myvar = currentTable.structMembers[ctx.getChild(0).getText()]
                     if (myvar != None):                      
                         self.nodeTypes[ctx] = myvar.varType    
-                        self.currentStructMovement += myvar.offset
-                        lastChild = True 
-                        isMiddle = True
                     else:
                         self.nodeTypes[ctx] = 'error'
                         errorMsg = "Property " + ctx.getChild(0).getText() + " not found on struct."
@@ -465,7 +456,6 @@ class DecafPrinter(DecafListener):
             myvar = self.lookupVarInSymbolTable(ctx.getChild(0).getText(), self.currentScope)
             if (myvar != None):
                 self.nodeTypes[ctx] = myvar.varType
-
             else:
                 self.nodeTypes[ctx] = 'error'
                 errorMsgWithVar = "Var " + ctx.getChild(0).getText() + " hasn't been defined yet"
@@ -490,9 +480,6 @@ class DecafPrinter(DecafListener):
                     errorMsgWithVar = "Var " + myvar.varId + " is not an array."
                     self.addError((ctx.start.line, "noArray"), errorMsgWithVar)
                     return
-                else:
-                    # Var saved and is array
-                    if (lastChild): self.arrayInfo = [myvar.varType, ctx.expression()]
         else:
             if (myvar != None):
                 if(myvar.isArray):
@@ -500,68 +487,120 @@ class DecafPrinter(DecafListener):
                     errorMsgWithVar = "Var " + myvar.varId + " is an array. An index should be stated."
                     self.addError((ctx.start.line, "isArray"), errorMsgWithVar)
         # ------------------------------------------------------------------------------------------------------------
+        #print(ctx.getText())
         if (myvar != None):
-            if (calculateStruct):
-                if (self.arrayInfo != []):
-                    newTemp = self.getNewTemp()
-                    tempAddr = self.createAddrLiteral(newTemp)
-                    op1Addr = self.createAddrLiteral(str(self.currentStructMovement))
-                    op2Addr = self.createAddrLiteral(str(myvar.offset))
-                    self.addQuad('+', op2Addr, op1Addr, tempAddr)
-
-                    arrayTemp = self.getNewTemp()
-                    arrayTempAddr = self.createAddrLiteral(arrayTemp)
-                    expressionAddr = self.nodeAddr[self.arrayInfo[1]]
-                    typeWidth = self.typeSizes[self.arrayInfo[0]]
-                    typeWidthAddr = self.createAddrLiteral(str(typeWidth))
-                    self.addQuad('*', expressionAddr, typeWidthAddr, arrayTempAddr)
-
-                    otherTemp = self.getNewTemp()
-                    otherTempAddr = self.createAddrLiteral(otherTemp)
-                    self.addQuad('+', tempAddr, arrayTempAddr, otherTempAddr)
-
-                    self.nodeAddr[ctx] = self.createAddrVar(myvar, otherTemp)
-                    self.arrayInfo = []
-                    self.currentStructMovement = 0
+            if (ctx.location()):
+                if (type(ctx.parentCtx) == DecafParser.LocationContext):
+                    if (ctx.expression()):
+                        tempStructAmount = self.getNewTemp()
+                        tempSaAddr = self.createAddrLiteral(tempStructAmount)
+                        expressionAddr = self.nodeAddr[ctx.expression()]
+                        indivdualStructSize = self.calculateSize(myvar.varType, 1)
+                        structWidthAddr = self.createAddrLiteral(str(indivdualStructSize))
+                        self.addQuad('*', expressionAddr, structWidthAddr, tempSaAddr)
+                        locationAddr = self.nodeAddr[ctx.location()]
+                        tempStructArray = self.getNewTemp()
+                        tempSarrAddr = self.createAddrLiteral(tempStructArray)
+                        self.addQuad('+', tempSaAddr, locationAddr, tempSarrAddr)
+                        self.nodeAddr[ctx] = self.createAddrLiteral(tempStructArray)
+                    else:
+                        tempOffset = self.getNewTemp()
+                        tempOffAddr = self.createAddrLiteral(tempOffset)
+                        structSizeAddr = self.createAddrLiteral(str(myvar.size))
+                        locationAddr = self.nodeAddr[ctx.location()]
+                        self.addQuad('+', structSizeAddr, locationAddr, tempOffAddr)
+                        self.nodeAddr[ctx] = self.createAddrLiteral(tempOffset)
                 else:
-                    newTemp = self.getNewTemp()
-                    tempAddr = self.createAddrLiteral(newTemp)
-                    op1Addr = self.createAddrLiteral(str(self.currentStructMovement))
-                    op2Addr = self.createAddrLiteral(str(myvar.offset))
-                    self.addQuad('+', op2Addr, op1Addr, tempAddr)
-
-                    self.nodeAddr[ctx] = self.createAddrVar(myvar, newTemp)
-                    self.currentStructMovement = 0
+                    if (ctx.expression()):
+                        tempStructAmount = self.getNewTemp()
+                        tempSaAddr = self.createAddrLiteral(tempStructAmount)
+                        expressionAddr = self.nodeAddr[ctx.expression()]
+                        indivdualStructSize = self.calculateSize(myvar.varType, 1)
+                        structWidthAddr = self.createAddrLiteral(str(indivdualStructSize))
+                        self.addQuad('*', expressionAddr, structWidthAddr, tempSaAddr)
+                        locationAddr = self.nodeAddr[ctx.location()]
+                        tempStructArray = self.getNewTemp()
+                        tempSarrAddr = self.createAddrLiteral(tempStructArray)
+                        self.addQuad('+', tempSaAddr, locationAddr, tempSarrAddr)
+                        self.nodeAddr[ctx] = self.createAddrVar(myvar, tempStructArray)
+                    else:
+                        tempOffset = self.getNewTemp()
+                        tempOffAddr = self.createAddrLiteral(tempOffset)
+                        structSizeAddr = self.createAddrLiteral(str(myvar.size))
+                        locationAddr = self.nodeAddr[ctx.location()]
+                        self.addQuad('+', structSizeAddr, locationAddr, tempOffAddr)
+                        self.nodeAddr[ctx] = self.createAddrVar(myvar, tempOffset)                 
             else:
-                if (ctx.expression() and isMiddle == False):
-                    # Can check array addresses
-                    newTemp = self.getNewTemp()
-                    tempAddr = self.createAddrLiteral(newTemp)
-                    expressionAddr = self.nodeAddr[ctx.expression()]
-                    typeWidth = self.typeSizes[myvar.varType]
-                    typeWidthAddr = self.createAddrLiteral(str(typeWidth))
-                    self.addQuad('*', expressionAddr, typeWidthAddr, tempAddr)
-
-                    otherTemp = self.getNewTemp()
-                    otherTempAddr = self.createAddrLiteral(otherTemp)
-                    offsetAddr = self.createAddrLiteral(str(myvar.offset))
-                    self.addQuad('+', tempAddr, offsetAddr, otherTempAddr)
-
-                    print("array " + ctx.getText(), str(ctx.start.line))
-                    self.nodeAddr[ctx] = self.createAddrVar(myvar, otherTemp)
+                if (type(ctx.parentCtx) == DecafParser.LocationContext):
+                    if (ctx.expression()):
+                        newTemp = self.getNewTemp()
+                        tempAddr = self.createAddrLiteral(newTemp)
+                        expressionAddr = self.nodeAddr[ctx.expression()]
+                        typeWidth = self.calculateSize(myvar.varType, 1)
+                        typeWidthAddr = self.createAddrLiteral(str(typeWidth))
+                        self.addQuad('*', expressionAddr, typeWidthAddr, tempAddr)
+                        otherTemp = self.getNewTemp()
+                        otherTempAddr = self.createAddrLiteral(otherTemp)
+                        offsetAddr = self.createAddrLiteral(str(myvar.offset))
+                        self.addQuad('+', tempAddr, offsetAddr, otherTempAddr)
+                        self.nodeAddr[ctx] = self.createAddrLiteral(otherTempAddr)
+                    else:
+                        newTemp = self.getNewTemp()
+                        tempAddr = self.createAddrLiteral(newTemp)
+                        offsetAddr = self.createAddrLiteral(str(myvar.offset))
+                        self.addQuad("", offsetAddr, None, tempAddr)
+                        self.nodeAddr[ctx] = self.createAddrLiteral(newTemp)
                 else:
-                    self.nodeAddr[ctx] = self.createAddrVar(myvar, myvar.offset)
+                    if (ctx.expression()):
+                        newTemp = self.getNewTemp()
+                        tempAddr = self.createAddrLiteral(newTemp)
+                        expressionAddr = self.nodeAddr[ctx.expression()]
+                        typeWidth = self.calculateSize(myvar.varType, 1)
+                        typeWidthAddr = self.createAddrLiteral(str(typeWidth))
+                        self.addQuad('*', expressionAddr, typeWidthAddr, tempAddr)
+                        otherTemp = self.getNewTemp()
+                        otherTempAddr = self.createAddrLiteral(otherTemp)
+                        offsetAddr = self.createAddrLiteral(str(myvar.offset))
+                        self.addQuad('+', tempAddr, offsetAddr, otherTempAddr)
+                        self.nodeAddr[ctx] = self.createAddrVar(myvar, otherTemp)
+                    else:
+                        self.nodeAddr[ctx] = self.createAddrVar(myvar, myvar.offset)
 
     def exitVarDeclaration(self, ctx: DecafParser.VarDeclarationContext):
         varType = ctx.getChild(0).getText()
         self.nodeTypes[ctx] = varType          
 
+
+    def exitLabel(self, ctx):
+        if (type(ctx.parentCtx) == DecafParser.Expr_arith1Context):
+            if (ctx.parentCtx.getChild(0) == ctx):
+                #print(self.nodeAddr[ctx].lblTrue)
+                self.addQuad("labelf", self.nodeAddr[ctx], None, None)
+        if (type(ctx.parentCtx) == DecafParser.Expr_arith2Context):
+            if (ctx.parentCtx.getChild(0) == ctx):
+                self.addQuad("labelt", self.nodeAddr[ctx], None, None) 
+                #print("a")
+
+
     def exitExpr_loc(self, ctx: DecafParser.Expr_locContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
         self.nodeAddr[ctx] = self.nodeAddr[ctx.getChild(0)]
 
+        self.exitLabel(ctx)
+
+        """
+        if (type(ctx.parentCtx) == DecafParser.Expr_arith1Context
+         or type(ctx.parentCtx) == DecafParser.Expr_arith2Context
+         or type(ctx.parentCtx) == DecafParser.Stat_ifContext
+         or type(ctx.parentCtx) == DecafParser.Stat_elseContext
+         ):
+            if (self.nodeTypes[ctx] == 'boolean'):
+        """
+
     def exitExpr_mcall(self, ctx: DecafParser.Expr_mcallContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]   
+        
+        self.exitLabel(ctx)
 
     """ Operations """
     # NOTE: Se debe de saltar un nodo siempre porque no se está tomando en cuenta el expression padre, se debe obtener el t ipo de los literals.
@@ -586,7 +625,9 @@ class DecafPrinter(DecafListener):
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
-            self.addError((ctx.start.line, "typingNoMatch"), "Operation expected two integer typed operators.")  
+            self.addError((ctx.start.line, "typingNoMatch"), "Operation expected two integer typed operators.") 
+
+        self.exitLabel(ctx)
 
     # + -
     def exitExpr_arith4(self, ctx: DecafParser.Expr_arith4Context):
@@ -611,6 +652,8 @@ class DecafPrinter(DecafListener):
             self.nodeTypes[ctx] = 'error'
             self.addError((ctx.start.line, "typingNoMatch"), "Operation expected two integer typed operators.")    
             return 
+
+        self.exitLabel(ctx)
 
     # eq_op: == != | rel_op: < <= > >=
     def exitExpr_arith3(self, ctx: DecafParser.Expr_arith3Context):
@@ -652,7 +695,9 @@ class DecafPrinter(DecafListener):
             # Si no está entre los permitidos, es error
             else:
                 self.nodeTypes[ctx] = 'error'
-                self.addError((ctx.start.line, "typingNoMatch"), "One of the operators has a type not accepted by the language.")      
+                self.addError((ctx.start.line, "typingNoMatch"), "One of the operators has a type not accepted by the language.")    
+
+        self.exitLabel(ctx) 
 
     # &&
     def exitExpr_arith2(self, ctx: DecafParser.Expr_arith2Context):
@@ -668,6 +713,8 @@ class DecafPrinter(DecafListener):
             self.nodeTypes[ctx] = 'error' 
             self.addError((ctx.start.line, "typingNoMatch"), "Operation expected two boolean typed operators.")   
 
+        self.exitLabel(ctx)
+
     # ||
     def exitExpr_arith1(self, ctx: DecafParser.Expr_arith1Context):
         op1 = ctx.getChild(0)
@@ -682,6 +729,8 @@ class DecafPrinter(DecafListener):
             self.nodeTypes[ctx] = 'error'
             self.addError((ctx.start.line, "typingNoMatch"), "Operation expected two boolean typed operators.")
 
+        self.exitLabel(ctx)
+
     # !
     def exitExpr_not(self, ctx: DecafParser.Expr_notContext):
         op1 = ctx.getChild(1)
@@ -694,6 +743,8 @@ class DecafPrinter(DecafListener):
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
             self.addError((ctx.start.line, "typingNoMatch"), "!: Operation expected a boolean typed operator.")
+
+        self.exitLabel(ctx)
 
     def exitExpr_minus(self, ctx: DecafParser.Expr_minusContext):
         op1 = ctx.getChild(1)
@@ -715,6 +766,8 @@ class DecafPrinter(DecafListener):
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
             self.addError((ctx.start.line, "typingNoMatch"), "-: Operation expected an int typed operator.")
+            
+        self.exitLabel(ctx)
 
     def exitExpr_parenthesis(self, ctx: DecafParser.Expr_parenthesisContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.expression()]
@@ -722,6 +775,8 @@ class DecafPrinter(DecafListener):
         """ Code generation """
         # Generate addr and set it to the same
         self.nodeAddr[ctx] = self.nodeAddr[ctx.expression()]
+
+        self.exitLabel(ctx)
 
     def exitStat_assignment(self, ctx: DecafParser.Stat_assignmentContext):
         op1 = ctx.getChild(0)
@@ -797,9 +852,15 @@ class DecafPrinter(DecafListener):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
         self.nodeAddr[ctx] = self.nodeAddr[ctx.getChild(0)]
 
+
+
     def exitExpr_literal(self, ctx: DecafParser.Expr_literalContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
         self.nodeAddr[ctx] = self.nodeAddr[ctx.getChild(0)]
+
+
+
+        #print("asgadsg")
 
     # -----------------------------------------------------------------------
     # Non override methods

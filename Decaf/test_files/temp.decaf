@@ -1,109 +1,30 @@
 class Program
 {
-
-struct B
+struct MyTest //45
 {
-	int m;
-	char n;
-	int o;
+	int n; //0
+	char b; //4
+	int c[10]; //6
 };
 
-struct C
+struct OtherTest //454
 {
-	struct B otherB;
-	int t;
+	struct MyTest T[10]; //0
+	int n; //450
 };
 
-struct S 
-{
-	int r;
-	int v[5];
-};
-
-int z;
-
-void test(int a){
-	int d;
-	d = 4;
-	d = a;
-}
 
 void main(void)
 {
-	int a; //0
-	int b;  //4
-	int c; //8
-	int testing_flow; //12 
-	int y[10]; //16
-	struct B myStruct; // 56
-	struct C anidado; // 65	
-	struct S testt;
-	boolean testing; //78
-	
-	myStruct.o = 3;
-	anidado.otherB.o = 3;
-	testt.v[3] = 69;
-
-	y[3] = 100;
-	testing = true;
-	a = 3;
-	b = 4;
-	c = a + b;
-	y[3] = a+b;
-	z = 50;
-
-	// ioasjdioajosdasd
-	test(c);
-
-	if (testing == true) {
-		testing_flow = 1;
-	} else {
-		testing_flow = 2;
-	}
-
-	while (a < 4) {
-		z = 1;
-	}
-
-	
-	if (a < 4 || b < 5) {
-		z = 3;
-	}
-
+	struct OtherTest M[5]; //2270
+	int i; 
+	i = 1;	
+	M[i].T[1].n = 2;
+	// M.offset = 0
+	// M[i] = 454 
+	// T[1] = 45
+	// n.offset = 0
+	// Total: 499
 }
 
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
