@@ -81,6 +81,7 @@ class DecafPrinter(DecafListener):
         # Symbol table related
         self.localOffset = 0
         self.globalOffset = 0
+        self.structOffset = 0
 
         self.currentMethodName = ""
         self.currentScope = "global"
@@ -97,6 +98,8 @@ class DecafPrinter(DecafListener):
         self.loopCounter = 1
         self.relCounter = 1
         self.firstCheck = False
+        self.currentStructMovement = 0
+        self.arrayInfo = []
 
         self.addScopeToSymbolTable(None)
         super().__init__()
@@ -300,6 +303,9 @@ class DecafPrinter(DecafListener):
     # ----------------------------------------------------------------------
     # Exit
     """ General purpose """
+    def exitStructDeclaration(self, ctx: DecafParser.StructDeclarationContext):
+        self.structOffset = 0
+
     def exitMethodDeclaration(self, ctx: DecafParser.MethodDeclarationContext):
         methodName = ctx.getChild(1).getText()
         if (methodName == 'main'):
@@ -398,15 +404,24 @@ class DecafPrinter(DecafListener):
 
     def exitLocation(self, ctx: DecafParser.LocationContext):
         myvar = None
-
+        calculateStruct = False
+        lastChild = False
+        isMiddle = False
+        # ------------------------------------------------------------------------------------------------------------
+        # Syntax check: Structs
+        #   Case 1: There is a property being accesed.
+        #           ex: a.b.c
         if (ctx.location() != None):
+            # Any other struct that is not the root of a struct
+            # ex: b in a.b.c
             if self.structStack != []:
                 currentTable = self.structStack.pop()
-
                 if (currentTable != None):
                     myvar = currentTable.structMembers[ctx.getChild(0).getText()]
                     if (myvar != None):
                         self.nodeTypes[ctx] = self.nodeTypes[ctx.location()]
+                        self.currentStructMovement += myvar.size
+                        isMiddle = True
                     else:
                         self.nodeTypes[ctx] = 'error'
                         errorMsg = "Property " + ctx.getChild(0).getText() + " not found on struct."
@@ -414,23 +429,29 @@ class DecafPrinter(DecafListener):
                 else:
                     self.nodeTypes[ctx] = 'error'
                     self.addError((ctx.start.line, "propNoStruct"), "Property is not an struct.")
+            # Root of struct
+            # ex: a in a.b.c
             else:
                 myvar = self.lookupVarInSymbolTable(ctx.getChild(0).getText(), self.currentScope)
-
                 if (myvar != None):
                     #structToUse = self.searchStructMember(structVarType.varType)
                     self.nodeTypes[ctx] = self.nodeTypes[ctx.location()]
+                    calculateStruct = True
                 else:
                     self.nodeTypes[ctx] = 'error'
                     self.addError((ctx.start.line, "unreachable"), "Undefined.")
+        #   Case 2: Property and parent is a struct
+        #       ex: c in a.b.c
         elif (type(ctx.parentCtx) == DecafParser.LocationContext and ctx.location() == None):
             if self.structStack != []:
                 currentTable = self.structStack.pop()
-
                 if (currentTable != None):
                     myvar = currentTable.structMembers[ctx.getChild(0).getText()]
                     if (myvar != None):                      
-                        self.nodeTypes[ctx] = myvar.varType        
+                        self.nodeTypes[ctx] = myvar.varType    
+                        self.currentStructMovement += myvar.offset
+                        lastChild = True 
+                        isMiddle = True
                     else:
                         self.nodeTypes[ctx] = 'error'
                         errorMsg = "Property " + ctx.getChild(0).getText() + " not found on struct."
@@ -438,18 +459,20 @@ class DecafPrinter(DecafListener):
                 else:
                     self.nodeTypes[ctx] = 'error'
                     self.addError((ctx.start.line, "propNoStruct"), "Parent struct doesn't have this property.")
+        # ------------------------------------------------------------------------------------------------------------
+        # Syntax check: Normal var. Var that doesn't belong to a struct.
         else:
-            # Var that doesn't belong to a struct.
             myvar = self.lookupVarInSymbolTable(ctx.getChild(0).getText(), self.currentScope)
             if (myvar != None):
                 self.nodeTypes[ctx] = myvar.varType
-                self.nodeAddr[ctx] = self.createAddrVar(myvar, myvar.offset)
+
             else:
                 self.nodeTypes[ctx] = 'error'
                 errorMsgWithVar = "Var " + ctx.getChild(0).getText() + " hasn't been defined yet"
                 self.addError((ctx.start.line, "notExistingVar"), errorMsgWithVar)
                 return
         # ------------------------------------------------------------------------------------------------------------
+        # Syntax check: Array
         if (ctx.expression()):
             if (self.nodeTypes[ctx.expression()] != 'int'):
                 self.nodeTypes[ctx] = 'error'
@@ -467,23 +490,67 @@ class DecafPrinter(DecafListener):
                     errorMsgWithVar = "Var " + myvar.varId + " is not an array."
                     self.addError((ctx.start.line, "noArray"), errorMsgWithVar)
                     return
-
-                # Can check array addresses
-                newTemp = self.getNewTemp()
-                tempAddr = self.createAddrLiteral(newTemp)
-                self.nodeAddr[ctx] = self.createAddrVar(myvar, newTemp)
-
-                expressionAddr = self.nodeAddr[ctx.expression()]
-
-                typeWidth = self.typeSizes[myvar.varType]
-                typeWidthAddr = self.createAddrLiteral(typeWidth)
-                self.addQuad('genArray', expressionAddr, typeWidthAddr, tempAddr)
+                else:
+                    # Var saved and is array
+                    if (lastChild): self.arrayInfo = [myvar.varType, ctx.expression()]
         else:
             if (myvar != None):
                 if(myvar.isArray):
                     self.nodeTypes[ctx] = 'error'
                     errorMsgWithVar = "Var " + myvar.varId + " is an array. An index should be stated."
                     self.addError((ctx.start.line, "isArray"), errorMsgWithVar)
+        # ------------------------------------------------------------------------------------------------------------
+        if (myvar != None):
+            if (calculateStruct):
+                if (self.arrayInfo != []):
+                    newTemp = self.getNewTemp()
+                    tempAddr = self.createAddrLiteral(newTemp)
+                    op1Addr = self.createAddrLiteral(str(self.currentStructMovement))
+                    op2Addr = self.createAddrLiteral(str(myvar.offset))
+                    self.addQuad('+', op2Addr, op1Addr, tempAddr)
+
+                    arrayTemp = self.getNewTemp()
+                    arrayTempAddr = self.createAddrLiteral(arrayTemp)
+                    expressionAddr = self.nodeAddr[self.arrayInfo[1]]
+                    typeWidth = self.typeSizes[self.arrayInfo[0]]
+                    typeWidthAddr = self.createAddrLiteral(str(typeWidth))
+                    self.addQuad('*', expressionAddr, typeWidthAddr, arrayTempAddr)
+
+                    otherTemp = self.getNewTemp()
+                    otherTempAddr = self.createAddrLiteral(otherTemp)
+                    self.addQuad('+', tempAddr, arrayTempAddr, otherTempAddr)
+
+                    self.nodeAddr[ctx] = self.createAddrVar(myvar, otherTemp)
+                    self.arrayInfo = []
+                    self.currentStructMovement = 0
+                else:
+                    newTemp = self.getNewTemp()
+                    tempAddr = self.createAddrLiteral(newTemp)
+                    op1Addr = self.createAddrLiteral(str(self.currentStructMovement))
+                    op2Addr = self.createAddrLiteral(str(myvar.offset))
+                    self.addQuad('+', op2Addr, op1Addr, tempAddr)
+
+                    self.nodeAddr[ctx] = self.createAddrVar(myvar, newTemp)
+                    self.currentStructMovement = 0
+            else:
+                if (ctx.expression() and isMiddle == False):
+                    # Can check array addresses
+                    newTemp = self.getNewTemp()
+                    tempAddr = self.createAddrLiteral(newTemp)
+                    expressionAddr = self.nodeAddr[ctx.expression()]
+                    typeWidth = self.typeSizes[myvar.varType]
+                    typeWidthAddr = self.createAddrLiteral(str(typeWidth))
+                    self.addQuad('*', expressionAddr, typeWidthAddr, tempAddr)
+
+                    otherTemp = self.getNewTemp()
+                    otherTempAddr = self.createAddrLiteral(otherTemp)
+                    offsetAddr = self.createAddrLiteral(str(myvar.offset))
+                    self.addQuad('+', tempAddr, offsetAddr, otherTempAddr)
+
+                    print("array " + ctx.getText(), str(ctx.start.line))
+                    self.nodeAddr[ctx] = self.createAddrVar(myvar, otherTemp)
+                else:
+                    self.nodeAddr[ctx] = self.createAddrVar(myvar, myvar.offset)
 
     def exitVarDeclaration(self, ctx: DecafParser.VarDeclarationContext):
         varType = ctx.getChild(0).getText()
@@ -705,6 +772,8 @@ class DecafPrinter(DecafListener):
 
             """ Code generation """
             self.addQuad("goton", self.nodeAddr[ctx.getChild(4)], None, None)
+            self.addQuad("labelf", self.nodeAddr[expression], None, None)
+
             self.blockCounter += 1
         else:
             # Si no pues es un error.
@@ -878,12 +947,7 @@ class DecafPrinter(DecafListener):
         canAdd = False
         currentVarSize = self.calculateSize(varType, num)
 
-        currentOffset = 0
-
-        if (self.currentScope == 'global'):
-            currentOffset = self.globalOffset
-        else:
-            currentOffset = self.localOffset
+        currentOffset = self.structOffset
 
         structId = "struct"+structId
         tempStructMembers = self.structDictionary.get(structId).structMembers
@@ -891,10 +955,7 @@ class DecafPrinter(DecafListener):
 
         if varId not in tempStructMembers:
             tempStructMembers[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize, isArray, currentOffset, scope)
-            if (self.currentScope == 'global'):
-                self.globalOffset += currentVarSize
-            else:
-                self.localOffset += currentVarSize
+            self.structOffset += currentVarSize
             tempStructSize += currentVarSize
             canAdd = True
         else:
@@ -956,9 +1017,7 @@ class DecafPrinter(DecafListener):
     def getCodeFromQuad(self, quad):
         quadString = ""
 
-        if (quad.op == "genArray"):
-            quadString = "  " + quad.result.addr + "=" + str(quad.arg1.addr) + "*" + str(quad.arg2.addr)
-        elif (quad.op == '<' or quad.op== '<=' or quad.op == '>' or quad.op == '>=' or quad.op == '==' or quad.op == '!='):
+        if (quad.op == '<' or quad.op== '<=' or quad.op == '>' or quad.op == '>=' or quad.op == '==' or quad.op == '!='):
             quadString = '  if ' + quad.arg1.addr + quad.op + quad.arg2.addr + ' goto ' + quad.result.lblTrue
         elif (quad.op == "label"):
             if (quad.arg1 != None):

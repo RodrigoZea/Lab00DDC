@@ -1,6 +1,25 @@
 class Program
 {
 
+struct B
+{
+	int m;
+	char n;
+	int o;
+};
+
+struct C
+{
+	struct B otherB;
+	int t;
+};
+
+struct S 
+{
+	int r;
+	int v[5];
+};
+
 int z;
 
 void test(int a){
@@ -11,13 +30,20 @@ void test(int a){
 
 void main(void)
 {
-	int a; 
-	int b; 
-	int c; 
-	int testing_flow; 
-	int y[10];
-	boolean testing; 
+	int a; //0
+	int b;  //4
+	int c; //8
+	int testing_flow; //12 
+	int y[10]; //16
+	struct B myStruct; // 56
+	struct C anidado; // 65	
+	struct S testt;
+	boolean testing; //78
 	
+	myStruct.o = 3;
+	anidado.otherB.o = 3;
+	testt.v[3] = 69;
+
 	y[3] = 100;
 	testing = true;
 	a = 3;
@@ -48,17 +74,6 @@ void main(void)
 
 
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 

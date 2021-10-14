@@ -1,0 +1,14 @@
+class Program
+{
+
+int globalArr[5];
+
+void main(void)
+{
+	int localArr[5];
+
+	localArr[2] = 10;
+	globalArr[2*2] = 20;
+
+}
+}
