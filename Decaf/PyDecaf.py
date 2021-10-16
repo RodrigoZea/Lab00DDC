@@ -1097,7 +1097,7 @@ class DecafPrinter(DecafListener):
             quadString = "  " + quad.op + " " + quad.arg1.addr
         elif (quad.arg2 != None):
             try:
-                quad.arg2.addr = quad.arg2.addr.addr+"duplicado"
+                quad.arg2.addr = quad.arg2.addr.addr
             except:
                 pass
 
