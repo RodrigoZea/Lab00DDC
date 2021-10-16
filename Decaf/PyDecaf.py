@@ -323,7 +323,6 @@ class DecafPrinter(DecafListener):
         self.enterScope(currentBlockObj.parentKey)
 
     def exitMethodCall(self, ctx: DecafParser.MethodCallContext):
-        #self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]
         methodName = ctx.getChild(0).getText()
         args = ctx.getChild(2).getText()
 
@@ -353,7 +352,7 @@ class DecafPrinter(DecafListener):
                 # Function call
                 methodAddr = AddrEntry("l_"+methodName+","+str(len(methodCallTypes)), None, None, None)
                 self.addQuad('call', methodAddr, None, None)
-
+                self.nodeAddr[ctx] = self.createAddrLiteral("R")
             else:
                 self.nodeTypes[ctx] = 'error'
                 self.addError((ctx.start.line, "paramNoMatch"), "Failed to call method, parameters don't match (either in type or order is incorrect)")
@@ -599,7 +598,8 @@ class DecafPrinter(DecafListener):
 
     def exitExpr_mcall(self, ctx: DecafParser.Expr_mcallContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]   
-        
+        self.nodeAddr[ctx] = self.nodeAddr[ctx.getChild(0)]
+
         self.exitLabel(ctx)
 
     """ Operations """
@@ -1096,6 +1096,11 @@ class DecafPrinter(DecafListener):
         elif (quad.result == None):
             quadString = "  " + quad.op + " " + quad.arg1.addr
         elif (quad.arg2 != None):
+            try:
+                quad.arg2.addr = quad.arg2.addr.addr+"duplicado"
+            except:
+                pass
+
             quadString = "  " + quad.result.addr + "=" + quad.arg1.addr  + quad.op + quad.arg2.addr 
         elif (quad.arg2 == None):
             quadString = "  " + quad.result.addr + "=" + quad.op + quad.arg1.addr 

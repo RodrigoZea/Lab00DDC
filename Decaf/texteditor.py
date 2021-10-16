@@ -110,6 +110,7 @@ txt_edit.grid(row=0, column=1, sticky="nsew")
 label_errors = ttk.Label(tab1, text="Errors")
 label_errors.grid(row=0, column=2, sticky="nw", padx=5, pady=5)
 
+# Codegen
 txt_codegen = scrolledtext.ScrolledText(tab2)
 txt_codegen.grid(row=0, column=0, sticky="nsew")
 
