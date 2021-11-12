@@ -1,0 +1,8 @@
+- Determinar variables live fuera de bloque
+- Inicializar los registos disponibles en MIPS
+- Una lista de register descriptors y address descriptors. 
+    . Es posible inicializar la de register descriptors con valores de None en todo
+- Diseñar función getReg(instruccion)
+    . Tomar de referencia la del libro
+- Traducir funciones acorde al libro, también se tiene que tomar en consideración que los temporales no se guardan en registros.
+- Static allocation y stack allocation para funciones y valores de retorno

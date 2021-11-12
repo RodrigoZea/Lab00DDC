@@ -4,6 +4,7 @@ import os
 from tkinter import ttk
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 from PyDecaf import check
+from MIPSTranslator import translate
 
 
 default_dir = 'D:\\UVG\\5toAno\\comp2\\Lab00DDC\\Decaf\\test_files'
@@ -75,6 +76,12 @@ def run_antlr():
     txt_codegen.delete(1.0, tk.END)
     txt_codegen.insert(tk.END, element)
 
+    # Write it to another file
+    codegen_output = default_dir + "\\intermediate.txt"
+    with open(codegen_output, "w") as output_file:
+        output_file.write(element)
+
+    translate(codegen_output)
 
 filepath_temp = None
 window = tk.Tk()

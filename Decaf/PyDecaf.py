@@ -245,6 +245,8 @@ class DecafPrinter(DecafListener):
         labelTrue = self.createLabel("block"+str(self.blockCounter)+".true")
         labelNext = self.createLabel("s"+str(self.blockCounter)+".next")
 
+        self.blockCounter += 1
+
         nextAddr = self.createAddrNext(labelNext)
 
         # Else
@@ -265,6 +267,9 @@ class DecafPrinter(DecafListener):
         labelTrue = self.createLabel("block"+str(self.blockCounter)+".true")
         labelFalse = self.createLabel("s"+str(self.blockCounter)+".next")
 
+        self.blockCounter += 1
+        self.loopCounter += 1
+
         #self.nodeAddr[ctx] = self.createAddrLabels
         self.nodeAddr[ctx.getChild(2)] = self.createAddrLabels(labelTrue, labelFalse)
         self.nodeAddr[ctx.getChild(4)] = self.createAddrNext(labelBegin)
@@ -280,6 +285,7 @@ class DecafPrinter(DecafListener):
         op2 = ctx.getChild(2)
 
         op1False = self.createLabel("rel"+str(self.relCounter)+".false")
+        self.relCounter += 1
 
         self.nodeAddr[op1] = self.createAddrLabels(self.nodeAddr[ctx].lblTrue, op1False)
         self.nodeAddr[op2] = self.nodeAddr[ctx]
@@ -290,6 +296,7 @@ class DecafPrinter(DecafListener):
         op2 = ctx.getChild(2)
 
         op1True = self.createLabel("rel"+str(self.relCounter)+".true")
+        self.relCounter += 1
 
         self.nodeAddr[op1] = self.createAddrLabels(op1True, self.nodeAddr[ctx].lblFalse)
         self.nodeAddr[op2] = self.nodeAddr[ctx]
@@ -394,6 +401,8 @@ class DecafPrinter(DecafListener):
 
                     if (exprType == methodType):
                         self.nodeTypes[ctx] = 'void'
+                        self.addQuad('return', self.nodeAddr[expressionOom.getChild(0)], None, None)
+
                     else:
                         self.nodeTypes[ctx] = 'error'
                         self.addError((ctx.start.line, "returnNotMatching"), "Return statement type doesn't match with method type.")
@@ -587,15 +596,6 @@ class DecafPrinter(DecafListener):
 
         self.exitLabel(ctx)
 
-        """
-        if (type(ctx.parentCtx) == DecafParser.Expr_arith1Context
-         or type(ctx.parentCtx) == DecafParser.Expr_arith2Context
-         or type(ctx.parentCtx) == DecafParser.Stat_ifContext
-         or type(ctx.parentCtx) == DecafParser.Stat_elseContext
-         ):
-            if (self.nodeTypes[ctx] == 'boolean'):
-        """
-
     def exitExpr_mcall(self, ctx: DecafParser.Expr_mcallContext):
         self.nodeTypes[ctx] = self.nodeTypes[ctx.getChild(0)]   
         self.nodeAddr[ctx] = self.nodeAddr[ctx.getChild(0)]
@@ -669,7 +669,6 @@ class DecafPrinter(DecafListener):
 
                 self.addQuad(symbol, self.nodeAddr[op1], self.nodeAddr[op2], self.nodeAddr[ctx])
                 self.addQuad('gotof', self.nodeAddr[ctx], None, None)
-                self.relCounter += 1
             else:
                 # Si no pues es un error.
                 self.nodeTypes[ctx] = 'error'
@@ -687,7 +686,6 @@ class DecafPrinter(DecafListener):
 
                     self.addQuad(symbol, self.nodeAddr[op1], self.nodeAddr[op2], self.nodeAddr[ctx])
                     self.addQuad('gotof', self.nodeAddr[ctx], None, None)
-                    self.relCounter += 1
                 else:
                     # Si no pues es un error.
                     self.nodeTypes[ctx] = 'error'
@@ -811,7 +809,7 @@ class DecafPrinter(DecafListener):
             nextAddr = self.nodeAddr[statement] 
 
             self.addQuad("labeln", nextAddr, None, None)
-            self.blockCounter += 1
+            
             self.firstCheck = False 
         else:
             # Si no pues es un error.
@@ -828,8 +826,6 @@ class DecafPrinter(DecafListener):
             """ Code generation """
             self.addQuad("goton", self.nodeAddr[ctx.getChild(4)], None, None)
             self.addQuad("labelf", self.nodeAddr[expression], None, None)
-
-            self.blockCounter += 1
         else:
             # Si no pues es un error.
             self.nodeTypes[ctx] = 'error'
@@ -1080,6 +1076,8 @@ class DecafPrinter(DecafListener):
 
         if (quad.op == '<' or quad.op== '<=' or quad.op == '>' or quad.op == '>=' or quad.op == '==' or quad.op == '!='):
             quadString = '  if ' + quad.arg1.addr + quad.op + quad.arg2.addr + ' goto ' + quad.result.lblTrue
+        elif (quad.op == "return"):
+            quadString = "  return " + quad.arg1.addr
         elif (quad.op == "label"):
             if (quad.arg1 != None):
                 quadString = quad.arg1.addr + ":"

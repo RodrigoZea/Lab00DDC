@@ -1,0 +1,79 @@
+l_Minimo:
+  t1=L[0]*4
+  t2=t1+0
+  L[4]=G[t2]
+  L[8]=L[0]
+l_loop1.begin:
+  if L[0]<10 goto l_block1.true
+  goto l_s1.next
+l_block1.true:
+  t3=L[0]*4
+  t4=t3+0
+  if G[t4]<L[4] goto l_block2.true
+  goto l_s2.next
+l_block2.true:
+  t5=L[0]*4
+  t6=t5+0
+  L[4]=G[t6]
+  L[8]=L[0]
+l_s2.next:
+  t7=L[0]+1
+  L[0]=t7
+  goto l_loop1.begin
+l_s1.next:
+  return L[8]
+l_Ordenar:
+  L[0]=0
+l_loop2.begin:
+  if L[0]<10 goto l_block3.true
+  goto l_s3.next
+l_block3.true:
+  param L[0]
+  call l_Minimo,1
+  L[12]=R
+  t1=L[12]*4
+  t2=t1+0
+  L[8]=G[t2]
+  t3=L[12]*4
+  t4=t3+0
+  t5=L[0]*4
+  t6=t5+0
+  G[t4]=G[t6]
+  t7=L[0]*4
+  t8=t7+0
+  G[t8]=L[8]
+  t9=L[0]+1
+  L[0]=t9
+  goto l_loop2.begin
+l_s3.next:
+l_OutputInt:
+l_InputInt:
+  return 0
+l_main:
+  L[0]=0
+l_loop3.begin:
+  if L[0]<10 goto l_block4.true
+  goto l_s4.next
+l_block4.true:
+  t1=L[0]*4
+  t2=t1+0
+  call l_InputInt,0
+  G[t2]=R
+  t3=L[0]+1
+  L[0]=t3
+  goto l_loop3.begin
+l_s4.next:
+  call l_Ordenar,0
+  L[0]=0
+l_loop4.begin:
+  if L[0]<10 goto l_block5.true
+  goto l_s5.next
+l_block5.true:
+  t4=L[0]*4
+  t5=t4+0
+  param G[t5]
+  call l_OutputInt,1
+  t6=L[0]+1
+  L[0]=t6
+  goto l_loop4.begin
+l_s5.next:

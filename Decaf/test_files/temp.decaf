@@ -1,30 +1,74 @@
 class Program
 {
-struct MyTest //45
-{
-	int n; //0
-	char b; //4
-	int c[10]; //6
-};
 
-struct OtherTest //454
-{
-	struct MyTest T[10]; //0
-	int n; //450
-};
+int A[10];
 
+int Minimo(int i)
+{
+	int Min;
+	int index;
+	Min = A[i];
+	index = i;
+	while(i<10)
+	{
+		if (A[i]<Min)
+		{
+			Min = A[i];
+			index = i;
+		}
+		i = i + 1;
+	}
+	return index;
+}
+
+void Ordenar(void)
+{
+	int i;
+	int j;
+	int temp;
+	i = 0;
+	while(i<10)
+	{
+		int Index;
+		Index = Minimo(i);
+		temp = A[Index];
+		A[Index] = A[i];
+		A[i]=temp;
+		i = i+1;
+	}
+}
+
+void OutputInt(int n)
+{
+}
+
+int InputInt(void)
+{return 0;}
 
 void main(void)
 {
-	struct OtherTest M[5]; //2270
-	int i; 
-	i = 1;	
-	M[i].T[1].n = 2;
-	// M.offset = 0
-	// M[i] = 454 
-	// T[1] = 45
-	// n.offset = 0
-	// Total: 499
-}
+
+	int i;
+	i = 0;
+	while(i<10)
+	{
+		A[i]=InputInt();
+		i = i+1;		
+	}
+	Ordenar();
+	i = 0;
+	while(i<10)
+	{
+		OutputInt(A[i]);
+		i = i+1;
+	}
 
 }
+
+
+
+
+
+
+}
+
