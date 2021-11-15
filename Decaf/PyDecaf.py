@@ -17,16 +17,17 @@ class VarSymbolTableItem():
 
     scope: scope it belongs to. (CURRENTLY OMMITED)
     """
-    def __init__(self, varId, varType, varContext, num, size, isArray, offset, scope):
+    def __init__(self, varId, varType, varContext, num, size, isArray, offset, scope, memoryLoc, live=False):
         self.varId = varId 
         self.varType = varType
-        self.value = None
         self.num = num
         self.size = size
         self.offset = offset
         self.varContext = varContext
         self.isArray = isArray
         self.scope = scope
+        self.memoryLoc = memoryLoc
+        self.live = live
 
 class StructSymbolTableItem():
     def __init__(self, structId, structMembers):
@@ -242,8 +243,8 @@ class DecafPrinter(DecafListener):
                 self.structStack.append(structToUse)
 
     def enterStat_if(self, ctx: DecafParser.Stat_ifContext):
-        labelTrue = self.createLabel("block"+str(self.blockCounter)+".true")
-        labelNext = self.createLabel("s"+str(self.blockCounter)+".next")
+        labelTrue = self.createLabel("block"+str(self.blockCounter)+"_true")
+        labelNext = self.createLabel("s"+str(self.blockCounter)+"_next")
 
         self.blockCounter += 1
 
@@ -251,7 +252,7 @@ class DecafPrinter(DecafListener):
 
         # Else
         if (len(ctx.children) > 5):
-            labelFalse = self.createLabel("block"+str(self.blockCounter)+".false")
+            labelFalse = self.createLabel("block"+str(self.blockCounter)+"_false")
             exprAddr = self.createAddrLabels(labelTrue, labelFalse)
         else:
             labelFalse = labelNext
@@ -262,10 +263,10 @@ class DecafPrinter(DecafListener):
 
     # While but it's wrongly named
     def enterStat_else(self, ctx: DecafParser.Stat_elseContext):
-        labelBegin = self.createLabel("loop"+str(self.loopCounter)+".begin")
+        labelBegin = self.createLabel("loop"+str(self.loopCounter)+"_begin")
 
-        labelTrue = self.createLabel("block"+str(self.blockCounter)+".true")
-        labelFalse = self.createLabel("s"+str(self.blockCounter)+".next")
+        labelTrue = self.createLabel("block"+str(self.blockCounter)+"_true")
+        labelFalse = self.createLabel("s"+str(self.blockCounter)+"_next")
 
         self.blockCounter += 1
         self.loopCounter += 1
@@ -284,7 +285,7 @@ class DecafPrinter(DecafListener):
         op1 = ctx.getChild(0)
         op2 = ctx.getChild(2)
 
-        op1False = self.createLabel("rel"+str(self.relCounter)+".false")
+        op1False = self.createLabel("rel"+str(self.relCounter)+"_false")
         self.relCounter += 1
 
         self.nodeAddr[op1] = self.createAddrLabels(self.nodeAddr[ctx].lblTrue, op1False)
@@ -295,7 +296,7 @@ class DecafPrinter(DecafListener):
         op1 = ctx.getChild(0)
         op2 = ctx.getChild(2)
 
-        op1True = self.createLabel("rel"+str(self.relCounter)+".true")
+        op1True = self.createLabel("rel"+str(self.relCounter)+"_true")
         self.relCounter += 1
 
         self.nodeAddr[op1] = self.createAddrLabels(op1True, self.nodeAddr[ctx].lblFalse)
@@ -357,7 +358,7 @@ class DecafPrinter(DecafListener):
                             self.addQuad('param', self.nodeAddr[ctx.getChild(i)], None, None)
 
                 # Function call
-                methodAddr = AddrEntry("l_"+methodName+","+str(len(methodCallTypes)), None, None, None)
+                methodAddr = AddrEntry(methodName+","+str(len(methodCallTypes)), None, None, None)
                 self.addQuad('call', methodAddr, None, None)
                 self.nodeAddr[ctx] = self.createAddrLiteral("R")
             else:
@@ -950,7 +951,13 @@ class DecafPrinter(DecafListener):
         tempSymbolTable = self.scopeDictionary.get(self.currentScope).symbolTable
 
         if varId not in tempSymbolTable:
-            tempSymbolTable[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize, isArray, currentOffset, scope)
+            if (scope == 'global'):
+                codeContext = "G"
+            else:
+                codeContext = "L"
+            addrString = codeContext+"["+str(currentOffset)+"]"
+
+            tempSymbolTable[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize, isArray, currentOffset, scope, addrString)
             if (self.currentScope == 'global'):
                 self.globalOffset += currentVarSize
             else:
@@ -980,9 +987,6 @@ class DecafPrinter(DecafListener):
 
         return searchedVar
 
-    def updateVarInSymbolTable(self, varId, varValue, scopeName):
-        print("updating value")
-
     def lookupMethodInSymbolTable(self, methodId):
         scopeObject = self.scopeDictionary.get(methodId)
         return scopeObject
@@ -1011,6 +1015,12 @@ class DecafPrinter(DecafListener):
         tempStructSize = self.structDictionary.get(structId).size
 
         if varId not in tempStructMembers:
+            if (scope == 'global'):
+                codeContext = "G"
+            else:
+                codeContext = "L"
+            addrString = codeContext+"["+str(currentOffset)+"]"
+
             tempStructMembers[varId] = VarSymbolTableItem(varId, varType, varContext, num, currentVarSize, isArray, currentOffset, scope)
             self.structOffset += currentVarSize
             tempStructSize += currentVarSize
@@ -1068,7 +1078,7 @@ class DecafPrinter(DecafListener):
         return tempName
 
     def createLabel(self, label_name):
-        newLabel = "l_"+label_name
+        newLabel = label_name
         return newLabel
 
     def getCodeFromQuad(self, quad):
@@ -1126,7 +1136,7 @@ def check(argv):
         print("     Return type: ", v.returnType)
         print("     Items: ")
         for var, varItem in v.symbolTable.items():
-            print("         VarId: " + var + ", VarType: " + varItem.varType + ", Num: " + str(varItem.num) + ", Size: " + str(varItem.size) + ", isArray: " + str(varItem.isArray) + ", Offset: " + str(varItem.offset))
+            print("         VarId: " + var + ", VarType: " + varItem.varType + ", Num: " + str(varItem.num) + ", Size: " + str(varItem.size) + ", isArray: " + str(varItem.isArray) + ", Offset: " + str(varItem.offset) + ", MemoryLoc: " + str(varItem.memoryLoc))
 
     print("--------------------------------------------")
     print("STRUCT INFORMATION \n")
@@ -1144,7 +1154,7 @@ def check(argv):
         quadTranslated.append(printer.getCodeFromQuad(quad)+"\n")
 
     #traverse(tree, parser.ruleNames)
-    return printer.errorDictionary, quadTranslated
+    return printer.errorDictionary, quadTranslated, printer.scopeDictionary, printer.structDictionary
 
 def traverse(tree, rule_names, indent = 0):
     if tree.getText() == "<EOF>":

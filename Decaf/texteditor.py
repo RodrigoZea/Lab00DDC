@@ -59,7 +59,7 @@ def run_antlr():
     label_errors.config(text="")
     window.title(f"Decaf Editor - Checking {filepath}")
 
-    errors, quads = check(filepath)
+    errors, quads, scopeSymTable, structSymTable = check(filepath)
     n = len(errors)
 
     element = ''
@@ -81,7 +81,7 @@ def run_antlr():
     with open(codegen_output, "w") as output_file:
         output_file.write(element)
 
-    translate(codegen_output)
+    translate(codegen_output, scopeSymTable, structSymTable)
 
 filepath_temp = None
 window = tk.Tk()
