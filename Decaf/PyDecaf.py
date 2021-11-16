@@ -326,6 +326,12 @@ class DecafPrinter(DecafListener):
 
         self.enterScope("global")
 
+        """ Code generation """
+        # Create new label
+        newLabel = self.createLabel(methodName+"_exit")
+        newAddr = self.createAddrLiteral(newLabel)
+        self.addQuad("label", newAddr, None, None)
+
     def exitBlock(self, ctx: DecafParser.BlockContext):
         currentBlockObj = self.lookupMethodInSymbolTable(self.currentScope)
         self.enterScope(currentBlockObj.parentKey)

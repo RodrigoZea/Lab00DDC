@@ -22,6 +22,7 @@ s2_next:
   goto loop1_begin
 s1_next:
   return L[8]
+Minimo_exit:
 Ordenar:
   L[0]=0
 loop2_begin:
@@ -46,9 +47,12 @@ block3_true:
   L[0]=t9
   goto loop2_begin
 s3_next:
+Ordenar_exit:
 OutputInt:
+OutputInt_exit:
 InputInt:
   return 0
+InputInt_exit:
 main:
   L[0]=0
 loop3_begin:
@@ -77,3 +81,4 @@ block5_true:
   L[0]=t6
   goto loop4_begin
 s5_next:
+main_exit:
