@@ -1,11 +1,18 @@
 - Determinar variables live fuera de bloque
     . Se podría revisar del final al inicio el código para determinar las variables live y hacer los address descriptors.
-- Inicializar los registos disponibles en MIPS
-- Una lista de register descriptors y address descriptors. 
-    . Es posible inicializar la de register descriptors con valores de None en todo
+- Inicializar los registos disponibles en MIPS (como register descriptors)
+- Empezar a leer el código intermedio
+- Al leer un método, producis el label del método y luego buscas el tamaño del método. 
+- Colocar tamaño de método en Stack
+- Inicializar lista de  address descriptors. 
+- Partir operación en operandos y conseguir el operador de la operación 
+- Traducir operando a operación de assembler (+ -> add, - -> sub, y así)
+- Hacer operaciones de Load, Store, Copy, Operation (una suma, resta, etc)
 - Diseñar función getReg(instruccion)
     . Tomar de referencia la del libro
-- Traducir funciones acorde al libro, también se tiene que tomar en consideración que los temporales no se guardan en registros.
+- Valores de retorno, llamadas a métodos
+
+también se tiene que tomar en consideración que los temporales no se guardan en registros.
     . Dividir las funciones y obtener el registro correspondiente para cada una
 - Static allocation y stack allocation para funciones y valores de retorno
     . Para esto nos beneficiamos de tener las variables como G/L[offset] 

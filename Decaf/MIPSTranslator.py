@@ -47,6 +47,7 @@ class Translator():
                 leftOp = eqSplit[0].strip()
                 opIndex = re.search('\+|\-|\*|\/', eqSplit[1])
                 if (opIndex):
+                    # x = y + z
                     operator = eqSplit[1][opIndex.start()]
                     operands = eqSplit[1].split(operator)
                     op1 = operands[0]
@@ -63,8 +64,10 @@ class Translator():
                     regList = self.getReg([leftOp, op1, op2])
                     
                     if (len(regList) > 2):
-                        self.createInstruction(opTranslated, regList[0], regList[1], regList[2])
+                        self.createInstruction(opTranslated, '$'+regList[0], '$'+regList[1], '$'+regList[2])
+                        self.handleOperation(regList[0], leftOp)
                 else:
+                    # x = y
                     op1 = eqSplit[1].rstrip("\n")
 
                     if ("t" in op1):
@@ -73,6 +76,10 @@ class Translator():
                         if leftOp not in self.addrDict: self.addrDict[leftOp] = []
                     
                     regList = self.getReg([leftOp, op1])
+
+                    if (len(regList) > 1):
+                        self.createInstruction("move", '$'+regList[0], '$'+regList[1])
+                        self.handleCopy(regList[1], leftOp)
             
    
     # Takes a String[] with the vars in order (left right var 1st, first var after the = is 2nd, var after operator is 3rd)
@@ -86,17 +93,17 @@ class Translator():
                 # If var is not in a register, but there is a register that is currently empty, pick it
                 for r, regList in self.regDict.items():
                     if (regList == []): 
-                        regSelectedList.append("$"+r)
+                        regSelectedList.append(r)
                         #print("Appended on literal " + varList[i] + ", " + r)
                         stopSearch = True
                         # Check value to load
-                        self.createInstruction('li', "$"+r, varList[i])
+                        self.createInstruction('li', r, varList[i])
                     if (stopSearch): break 
             else:
                 # If var is currently in a register, pick a register already containing it.
                 for r, regList in self.regDict.items():
                     if varList[i] in regList: 
-                        regSelectedList.append("$"+r)
+                        regSelectedList.append(r)
                         #print("Appended on saved reg " + varList[i] + ", " + r)
                         stopSearch = True
                     if (stopSearch): break 
@@ -104,11 +111,11 @@ class Translator():
                 # If var is not in a register, but there is a register that is currently empty, pick it
                 for r, regList in self.regDict.items():
                     if (regList == []): 
-                        regSelectedList.append("$"+r)
+                        regSelectedList.append(r)
                         #print("Appended on free reg " + varList[i] + ", " + r)
                         stopSearch = True
                         # Check value to load TODO 
-                        self.createInstruction('lw', "$"+r, varList[i])
+                        self.createInstruction('lw', r, varList[i])
                         self.handleLoad(r, varList[i])
                     if (stopSearch): break  
                 if (stopSearch): continue
@@ -118,14 +125,14 @@ class Translator():
                 if addrList != []:
                     tempReg = self.getRegFromAddrDescriptor(varList[i])
                     if (tempReg != None):
-                        regSelectedList.append("$"+tempReg)
+                        regSelectedList.append(tempReg)
                         #print("Appended on addr desc " + varList[i] + ", " + tempReg)
                         stopSearch = True 
                 if (stopSearch): continue  
                 # Possibility 2: Check if its not the variable on the left and its also the same one used to store the var 
                 if (i > 0):
                     if varList[i] == varList[0]:
-                        regSelectedList.append("$"+regList[0])
+                        regSelectedList.append(+regList[0])
                         #print("Same operand" + varList[i] + ", " + regList[0])
                         stopSearch = True 
                 if (stopSearch): continue
@@ -135,9 +142,9 @@ class Translator():
                     newScore = len(regList)
                     if (newScore < score[1]):
                         score = [r, newScore]
-                regSelectedList.append("$"+score[0])
+                regSelectedList.append(score[0])
                 #print("Appended on spill " + varList[i] + ", " + score[0])
-                self.createInstruction('sw', varList[i], "$"+score[0])
+                self.createInstruction('sw', varList[i], score[0])
                 self.handleStore(varList[i])
         #print("RegList: ", regSelectedList)
         #print("-------------------------------")
@@ -164,6 +171,12 @@ class Translator():
             return 'mul'
         return 'unknown'
 
+    def inputInt(self):
+        print("input")
+    
+    def outputInt(self):
+        print("output")
+
     def handleLoad(self, reg, addr):
         self.regDict[reg] = [addr]
         addrList = self.addrDict.get(addr)
@@ -179,8 +192,8 @@ class Translator():
         self.addrDict[addr] = [reg]
 
     def handleOperation(self, regx, addrx):
-        self.regDict[regx] = addrx 
-        self.addrDict[addrx] = regx 
+        self.regDict[regx] = [addrx] 
+        self.addrDict[addrx] = [regx] 
 
         for k in self.addrDict.keys():
             addrList = self.addrDict.get(k)
@@ -247,10 +260,12 @@ class Translator():
         self.addLine("  {0}: .{1} {2}".format(varName, varType, varSize))
 
     def addLine(self, line):
-        self.instructionList.append(line)
+        self.instructionList.append(line+'\n')
 
 def translate(file, scopeSymTable, structSymTable):
     translator = Translator(file, scopeSymTable, structSymTable)
 
     for line in translator.instructionList:
         print(line)
+
+    return translator.instructionList

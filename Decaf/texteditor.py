@@ -81,7 +81,18 @@ def run_antlr():
     with open(codegen_output, "w") as output_file:
         output_file.write(element)
 
-    translate(codegen_output, scopeSymTable, structSymTable)
+    translation_output = translate(codegen_output, scopeSymTable, structSymTable)
+    element = ''
+    for line in translation_output:
+        element = element + line
+
+    txt_mips.delete(1.0, tk.END)
+    txt_mips.insert(tk.END, element)
+
+    # Write it to another file
+    mips_output = default_dir + "\\final.s"
+    with open(mips_output, "w") as output_file:
+        output_file.write(element)
 
 filepath_temp = None
 window = tk.Tk()
@@ -90,9 +101,11 @@ tabControl = ttk.Notebook(window)
 
 tab1 = ttk.Frame(tabControl)
 tab2 = ttk.Frame(tabControl)
+tab3 = ttk.Frame(tabControl)
   
 tabControl.add(tab1, text ='Syntax Analysis')
 tabControl.add(tab2, text ='Intermediate Code Generation')
+tabControl.add(tab3, text ='MIPS Code')
 tabControl.pack(expand = 1, fill ="both")
 
 tab1.rowconfigure(0, minsize=800, weight=1)
@@ -101,6 +114,9 @@ tab1.columnconfigure(2, minsize=700, weight=1)
 
 tab2.rowconfigure(0, minsize=800, weight=1)
 tab2.columnconfigure(0, minsize=800, weight=1)
+
+tab3.rowconfigure(0, minsize=800, weight=1)
+tab3.columnconfigure(0, minsize=800, weight=1)
 
 fr_buttons = ttk.Frame(tab1)
 fr_buttons.grid(row=0, column=0, stick="ns")
@@ -120,5 +136,9 @@ label_errors.grid(row=0, column=2, sticky="nw", padx=5, pady=5)
 # Codegen
 txt_codegen = scrolledtext.ScrolledText(tab2)
 txt_codegen.grid(row=0, column=0, sticky="nsew")
+
+# MIPS
+txt_mips = scrolledtext.ScrolledText(tab3)
+txt_mips.grid(row=0, column=0, sticky="nsew")
 
 window.mainloop()
