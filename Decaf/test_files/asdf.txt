@@ -1,0 +1,210 @@
+jump a main
+Minimo:
+  t1=L[0]*4
+  t2=t1+0
+  L[4]=G[t2]
+  L[8]=L[0]
+loop1_begin:
+  if L[0]<10 goto block1_true
+  goto s1_next
+block1_true:
+  t3=L[0]*4
+  t4=t3+0
+  if G[t4]<L[4] goto block2_true
+  goto s2_next
+block2_true:
+  t5=L[0]*4
+  t6=t5+0
+  L[4]=G[t6]
+  L[8]=L[0]
+s2_next:
+  t7=L[0]+1
+  L[0]=t7
+  goto loop1_begin
+s1_next:
+  return L[8]
+Minimo_exit:
+Ordenar:
+  L[0]=0
+loop2_begin:
+  if L[0]<10 goto block3_true
+  goto s3_next
+block3_true:
+  param L[0]
+  call Minimo,1
+  L[12]=R
+  t1=L[12]*4
+  t2=t1+0
+  L[8]=G[t2]
+  t3=L[12]*4
+  t4=t3+0
+  t5=L[0]*4
+  t6=t5+0
+  G[t4]=G[t6]
+  t7=L[0]*4
+  t8=t7+0
+  G[t8]=L[8]
+  t9=L[0]+1
+  L[0]=t9
+  goto loop2_begin
+s3_next:
+Ordenar_exit:
+OutputInt:
+  sub $sp, $sp, 4
+OutputInt_exit:
+InputInt:
+  return 0
+InputInt_exit:
+main:
+  L[0]=0
+loop3_begin:
+  if L[0]<10 goto block4_true
+  goto s4_next
+block4_true:
+  t1=L[0]*4
+  t2=t1+0
+  call InputInt,0
+  G[t2]=R
+  t3=L[0]+1
+  L[0]=t3
+  goto loop3_begin
+s4_next:
+  call Ordenar,0
+  L[0]=0
+loop4_begin:
+  if L[0]<10 goto block5_true
+  goto s5_next
+block5_true:
+  t4=L[0]*4
+  t5=t4+0
+  param G[t5]
+  
+  lw t1, param2
+  sw t1, -8($sp)
+  lw t0, param1
+  sw t0, -12($sp)
+
+  call OutputInt,1
+  jump OutputInt
+
+
+  t6=L[0]+1
+  L[0]=t6
+  goto loop4_begin
+s5_next:
+main_exit:
+
+---------------------------------------------------------------------------
+.data
+.align 2
+  G: .space 40
+  G[4]
+  G+4
+
+  G[t6]
+  G($t6) 
+.text
+  Minimo:
+      sub $sp, $sp, 4
+      sw $ra, ($sp)
+      sub $fp, $sp, 12
+      la $sp, ($fp)
+      lw $t0, 0($sp)
+      li $t1, 4
+      mul $t0, $t0, $t1
+      li $t1, 0
+      add $t1, $t0, $t1
+      lw $t2, 4($sp)
+      move $t2, $t3
+      lw $t4, 8($sp)
+      lw $t5, 0($sp)
+      move $t4, $t5
+  loop1_begin:
+  block1_true:
+      li $t6, 4
+      mul $t6, $t5, $t6
+      li $t7, 0
+      add $t7, $t6, $t7
+  block2_true:
+      li $t8, 4
+      mul $t8, $t5, $t8
+      li $t9, 0
+      add $t9, $t8, $t9
+      sw t6($sp), t0
+      move $t2, $t0
+      move $t4, $t5
+  s2_next:
+      sw ($sp), t1
+      sw ($sp), t1
+      move $t5, $t1
+  s1_next:
+      move $v0, $temp
+      add $sp, $fp, 12
+      lw $ra, ($sp)
+      add $sp, $sp, 4
+      jr $ra
+  Ordenar:
+      sub $sp, $sp, 4
+      sw $ra, ($sp)
+      sub $fp, $sp, 16
+      la $sp, ($fp)
+  loop2_begin:
+  block3_true:
+      sw 12($sp), t2
+      sw 12($sp), t2
+      sw t2($sp), t2
+      move $t4, $t2
+      sw 12($sp), t3
+      sw t4($sp), t3
+      sw t6($sp), t3
+      move $t3, $t3
+      sw ($sp), t4
+      sw ($sp), t4
+      sw ($sp), t4
+      sw t8($sp), t4
+      move $t4, $t2
+      sw ($sp), t4
+      sw ($sp), t4
+      move $t1, $t4
+  s3_next:
+      add $sp, $fp, 16
+      lw $ra, ($sp)
+      add $sp, $sp, 4
+      jr $ra
+  OutputInt:
+      sub $sp, $sp, 4
+      sw $ra, ($sp)
+      sub $fp, $sp, 4
+      la $sp, ($fp)
+      add $sp, $fp, 4
+      lw $ra, ($sp)
+      add $sp, $sp, 4
+      jr $ra
+  InputInt:
+      sub $sp, $sp, 4
+      sw $ra, ($sp)
+      sub $fp, $sp, 0
+      la $sp, ($fp)
+      move $v0, $temp
+      add $sp, $fp, 0
+      lw $ra, ($sp)
+      add $sp, $sp, 4
+      jr $ra
+  main:
+      sub $sp, $sp, 4
+      sw $ra, ($sp)
+      sub $fp, $sp, 4
+      la $sp, ($fp)
+  loop3_begin:
+  block4_true:
+      sw t2($sp), t6
+      move $t1, $t6
+  s4_next:
+  loop4_begin:
+  block5_true:
+      move $t1, $t9
+  s5_next:
+      add $sp, $fp, 4
+      lw $ra, ($sp)
+      add $sp, $sp, 4
+      jr $ra

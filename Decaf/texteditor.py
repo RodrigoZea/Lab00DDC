@@ -90,7 +90,7 @@ def run_antlr():
     txt_mips.insert(tk.END, element)
 
     # Write it to another file
-    mips_output = default_dir + "\\final.s"
+    mips_output = default_dir + "\\final.asm"
     with open(mips_output, "w") as output_file:
         output_file.write(element)
 
