@@ -1,84 +1,14 @@
-Minimo:
-  t1=L[0]*4
-  t2=t1+0
-  L[4]=G[t2]
-  L[8]=L[0]
-loop1_begin:
-  if L[0]<10 goto block1_true
-  goto s1_next
-block1_true:
-  t3=L[0]*4
-  t4=t3+0
-  if G[t4]<L[4] goto block2_true
-  goto s2_next
-block2_true:
-  t5=L[0]*4
-  t6=t5+0
-  L[4]=G[t6]
-  L[8]=L[0]
-s2_next:
-  t7=L[0]+1
-  L[0]=t7
-  goto loop1_begin
-s1_next:
-  return L[8]
-Minimo_exit:
-Ordenar:
+test:
   L[0]=0
-loop2_begin:
-  if L[0]<10 goto block3_true
-  goto s3_next
-block3_true:
-  param L[0]
-  call Minimo,1
-  L[12]=R
-  t1=L[12]*4
-  t2=t1+0
-  L[8]=G[t2]
-  t3=L[12]*4
-  t4=t3+0
-  t5=L[0]*4
-  t6=t5+0
-  G[t4]=G[t6]
-  t7=L[0]*4
-  t8=t7+0
-  G[t8]=L[8]
-  t9=L[0]+1
-  L[0]=t9
-  goto loop2_begin
-s3_next:
-Ordenar_exit:
-OutputInt:
-OutputInt_exit:
-InputInt:
-  return 0
-InputInt_exit:
+  L[4]=1
+  L[8]=2
+test_exit:
 main:
-  L[0]=0
-loop3_begin:
-  if L[0]<10 goto block4_true
-  goto s4_next
-block4_true:
-  t1=L[0]*4
-  t2=t1+0
-  call InputInt,0
-  G[t2]=R
-  t3=L[0]+1
-  L[0]=t3
-  goto loop3_begin
-s4_next:
-  call Ordenar,0
-  L[0]=0
-loop4_begin:
-  if L[0]<10 goto block5_true
-  goto s5_next
-block5_true:
-  t4=L[0]*4
-  t5=t4+0
-  param G[t5]
-  call OutputInt,1
-  t6=L[0]+1
-  L[0]=t6
-  goto loop4_begin
-s5_next:
+  L[0]=3
+  L[4]=4
+  L[8]=5
+  param L[0]
+  param L[4]
+  param L[8]
+  call test,3
 main_exit:

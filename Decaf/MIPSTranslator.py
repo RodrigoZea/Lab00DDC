@@ -5,6 +5,7 @@ class Translator():
         self.file = file
         self.currMethodSize = 0
         self.regDict = {}
+        self.paramRegs = {}
         self.addrDict = {}
         self.instructionList = []
         self.paramList = []
@@ -15,12 +16,19 @@ class Translator():
     def readFile(self):
         f = open(self.file, "r")
         self.writeData()
+        self.createRegList("a", 3, self.paramRegs)
         self.addLine(".text")
         self.createInstruction("la", "$s7", "G")
         self.createInstruction("j", "main")
         for x in f:
-            #print(x)
             self.translateLine(x) 
+        self.terminate()
+
+    def terminate(self):
+        self.createInstruction("j", "terminate")
+        self.addLine("  terminate:")
+        self.createInstruction("li", "$v0", "10")
+        self.createSimpleInstruction("syscall") 
 
     def writeData(self):
         self.addLine(".data")
@@ -32,69 +40,78 @@ class Translator():
             totalGlobalVarsSize += stVar.size
             self.createData("G", "space", totalGlobalVarsSize)
 
-        self.createData("newline", "asciiz", '"\n"')
-        self.createData("intPrompt", "asciiz", "Ingrese un número entero: ")
+        if totalGlobalVarsSize == 0:
+            self.createData("G", "space", totalGlobalVarsSize)
+
+        self.createData("newline", "asciiz", '"\\n"')
+        self.createData("intPrompt", "asciiz", '"Ingrese un numero entero: "')
         
 
     def translateLine(self, line):
         if line != "":
             # Label
             if ":" in line:
-                if "InputInt" in line:
+                if ("InputInt" in line) and ("_exit" not in line):     
+                    self.initializeRegisters(self.regDict)          
                     self.inputInt()
-                elif "OutputInt" in line:
+                elif ("OutputInt" in line) and ("_exit" not in line):  
+                    self.initializeRegisters(self.regDict)                 
                     self.outputInt()
                 elif "_exit" not in line:
                     self.addLine("  "+line.rstrip("\n"))
                     methodName = line[:-2]
                     if (methodName in self.scopeSymbolTable):
-                        self.initializeRegisters()
+                        self.initializeRegisters(self.regDict)
                         methodSize = self.getMethodSize(methodName)
                         self.createAddrList(methodName)
-                        # Allocate $ra space
-                        self.createInstruction('sub', '$sp', '$sp', '4')
-                        # ($sp) means we're accesing 0($sp) but the 0 isn't needed
-                        self.createInstruction('sw', '$ra', '($sp)')
+                        if ("main" not in methodName):
+                            # Allocate $ra space
+                            self.createInstruction('sub', '$sp', '$sp', '4')
+                            # ($sp) means we're accesing 0($sp) but the 0 isn't needed
+                            self.createInstruction('sw', '$ra', '($sp)')
                         # Allocate "method space"
                         self.createInstruction('sub', '$fp', '$sp', methodSize)
                         self.createInstruction('la', '$sp', '($fp)')
+                        self.loadParams(methodName)
                         self.currMethodSize = methodSize
                 else:
-                    self.createInstruction('add', '$sp', '$fp', self.currMethodSize)
-                    self.createInstruction('lw', '$ra', '($sp)')
-                    self.createInstruction('add', '$sp', '$sp', '4')
-                    self.createInstruction('jr', '$ra')
+                    if ("main" not in line):
+                        self.createInstruction('add', '$sp', '$fp', self.currMethodSize)
+                        self.createInstruction('lw', '$ra', '($sp)')
+                        self.createInstruction('add', '$sp', '$sp', '4')
+                        self.createInstruction('jr', '$ra')
             elif "param" in line:
                 paramSplit = line.split()
                 param = paramSplit[1]
                 self.paramList.append(param)
             elif "call" in line:
-                paramOffset = 8
                 if (self.paramList != []):
-                    for param in reversed(self.paramList):
+                    for param in self.paramList:
                         if ("t" in param):
                             if param not in self.addrDict: self.addrDict[param] = []
 
                         paramReg = self.getReg([param])
                         reg = self.translateTemp(param)
                         if (reg != None):
-                            regDest = self.getReg(param)
-                            self.createInstruction("sw", "$"+regDest, '('+reg+')')
+                            regDest = self.getReg([param])
+                            self.createInstruction("sw", "$"+regDest[0], '($'+reg+')')
 
-                        self.createInstruction("lw", "$"+paramReg[0], self.translateToSp(param))
-                        self.createInstruction("sw", "$"+paramReg[0], "-"+str(paramOffset)+"($sp)")
-                        paramOffset -= 4
+                        # Param regs
+                        aReg = self.getParamReg(param)
+                        self.createInstruction("move", "$"+aReg, "$"+paramReg[0])
+
+                        if ("t" in param):
+                            self.removeTemp(param)
 
                 self.paramList = []
                 # Call method
                 callSplit = line.split()
                 methodName = callSplit[1].split(',')[0]
-                self.createInstruction('j', methodName)
+                self.createInstruction('jal', methodName)
             elif "if" in line:
                 ifSplit = line.split()
                 condition = ifSplit[1]
                 goto = ifSplit[-1]
-
                 opIndex = re.search('\>=|\<=|\>|\<|\==', condition)
                 if (opIndex):
                     operator = condition[opIndex.start():opIndex.end()]
@@ -109,10 +126,14 @@ class Translator():
                     for op in opList: 
                         reg = self.translateTemp(op)
                         if (reg != None):
-                            regDest = self.getReg(op)
-                            self.createInstruction("sw", "$"+regDest, '('+reg+')')
+                            regDest = self.getReg([op])
+                            self.createInstruction("sw", "$"+regDest[0], '($'+reg+')')
 
-                    if (len(regList) > 2):
+                    if (len(regList) > 1):
+                        if ("t" in op1):
+                            self.removeTemp(op1)
+                        if ("t" in op2):
+                            self.removeTemp(op2)
                         self.saveMachineState()
                         self.createInstruction(opTranslated, '$'+regList[0], '$'+regList[1], goto)
 
@@ -146,8 +167,8 @@ class Translator():
                         for op in opList: 
                             reg = self.translateTemp(op)
                             if (reg != None):
-                                regDest = self.getReg(op)
-                                self.createInstruction("sw", "$"+regDest, '('+reg+')')
+                                regDest = self.getReg([op])
+                                self.createInstruction("sw", "$"+regDest[0], '($'+reg+')')
 
                         self.createInstruction(opTranslated, '$'+regList[0], '$'+regList[1], '$'+regList[2])
                         self.handleOperation(regList[0], leftOp)
@@ -173,11 +194,8 @@ class Translator():
                         for op in opList: 
                             reg = self.translateTemp(op)
                             if (reg != None):
-                                regDest = self.getReg(op)
-                                self.createInstruction("sw", "$"+regDest, '('+reg+')')
-
-                            regDest = self.getReg(op)
-                            self.createInstruction("sw", "$"+regDest, '('+reg+')')
+                                regDest = self.getReg([op])
+                                self.createInstruction("sw", "$"+regDest[0], '($'+reg+')')
 
                         self.createInstruction("move", '$'+regList[0], '$'+regList[1])
 
@@ -185,15 +203,17 @@ class Translator():
                             self.handleCopy(regList[1], leftOp)
 
                         # If temp has been used on right side, free space
+                        if ("t" in leftOp):
+                            self.removeTemp(leftOp)
                         if ("t" in op1):
                             self.removeTemp(op1)
             elif "return" in line:
                 wsSplit = line.split()
                 op1 = wsSplit[1].rstrip("\n")
                 print("operation: " + op1)
-                regList = self.getReg([op1])
+                opList = [op1]
+                regList = self.getReg(opList)
                 self.createInstruction("move", '$v0', '$'+regList[0])
-                #self.createInstruction("move", '$v0', '$temp')
    
     # Takes a String[] with the vars in order (left right var 1st, first var after the = is 2nd, var after operator is 3rd)
     def getReg(self, varList):
@@ -201,7 +221,7 @@ class Translator():
         for i in range(0, len(varList)): 
             stopSearch = False
             # Check if its a literal
-            if (varList[i] not in self.addrDict):
+            if (varList[i] not in self.addrDict and "t" not in varList[i]):
                 if (varList[i] == "R"):
                     regSelectedList.append("v0")
                 else:
@@ -251,11 +271,44 @@ class Translator():
                 self.handleStore(varList[i])
         return regSelectedList
 
+    def getParamReg(self, param):
+        reg = None 
+        stopSearch = False
+        for r, regList in self.paramRegs.items():
+            if (regList == []): 
+                reg = r
+                regList.append(param)
+                stopSearch = True 
+            if (stopSearch): break
+
+        return reg 
+
+    def clearParamRegs(self):
+        for r, regList in self.paramRegs.items():
+            regList = []
+
+    def loadParams(self, methodName):
+        symbolTable = self.scopeSymbolTable.get(methodName).symbolTable
+        regCount = 0
+        for varId, varT in symbolTable.items():
+            if (varT.varContext == "param"):
+                self.createInstruction("sw", "$a"+str(regCount), self.translateToSp(varT.memoryLoc))
+                regCount += 1
+
+        self.clearParamRegs()
+
     def removeTemp(self, temp):
-        self.addrDict.pop(temp, None)
+        toRemove = temp
+
+        if '[' in temp:
+            # Handle G
+            context = temp[0]
+            toRemove = temp[2:-1]
+
+        self.addrDict.pop(toRemove, None)
 
         for r, regList in self.regDict:
-            if temp in regList: regList.remove(temp)
+            if toRemove in regList: regList.remove(toRemove)
 
     def translateToSp(self, op):
         if '[' in op:
@@ -273,7 +326,10 @@ class Translator():
             if ("t" in op):
                 return op
 
+        return op
+
     def translateTemp(self, op):
+        regToReturn = None 
         if '[' in op:
             # Handle G
             context = op[0]
@@ -281,13 +337,15 @@ class Translator():
             if (context == 'L'):
                 if ("t" in offset):
                     reg = self.getReg([offset])
+                    regToReturn = reg[0]
                     self.createInstruction("add", "$"+reg[0], "$"+reg[0], "$sp")
             elif (context == 'G'):
                 if ("t" in offset):
                     reg = self.getReg([offset])
+                    regToReturn = reg[0]
                     self.createInstruction("add", "$"+reg[0], "$"+reg[0], "$s7")
         
-        return reg[0]
+        return regToReturn
 
     def getOperation(self, operator):
         if (operator == '+'):
@@ -314,7 +372,8 @@ class Translator():
         return 'unknown'
 
     def saveMachineState(self):
-        for addr, addrList in self.addrDict:
+        print(self.addrDict.keys())
+        for addr, addrList in self.addrDict.items():
             reg = None 
             if addrList != []:
                 for ad in addrList:
@@ -325,6 +384,7 @@ class Translator():
                 self.createInstruction("sw", "$"+reg, self.translateToSp(addr))
 
     def inputInt(self):
+        self.addLine("  "+"InputInt:")
         self.createInstruction("li", "$v0", 4)
         self.createInstruction("la", "$a0", "intPrompt")
         self.createSimpleInstruction("syscall")
@@ -333,6 +393,7 @@ class Translator():
         self.createInstruction("jr", "$ra")
     
     def outputInt(self):
+        self.addLine("  "+"OutputInt:")
         self.createInstruction("li", "$v0", 1)
         self.createSimpleInstruction("syscall")
         self.createInstruction("li", "$v0", 4)
@@ -361,15 +422,15 @@ class Translator():
             addrList = self.addrDict.get(k)
             if addrx in addrList: addrList.remove(addrx)
 
-    def initializeRegisters(self):
+    def initializeRegisters(self, regdict):
         # t0-t9 (temporales para calculos intermedios)
-        self.createRegList("t", 9)
+        self.createRegList("t", 9, regdict)
 
     # Create a list based on the register initial and the amount of registers to create
-    def createRegList(self, letter, maxRegCount):
+    def createRegList(self, letter, maxRegCount, regdict):
         for i in range(0, maxRegCount+1):
             currentReg = letter+str(i)
-            self.regDict[currentReg] = []
+            regdict[currentReg] = []
 
     def createAddrList(self, methodName):
         self.addrDict = {}

@@ -20,24 +20,3 @@ class Program
         test(a, b, c);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
